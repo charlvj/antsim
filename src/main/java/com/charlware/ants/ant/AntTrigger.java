@@ -19,5 +19,8 @@ public enum AntTrigger {
 	LostMarker,
 	GotHungry,
 	Starved,
-	AntHomeOutOfFood
+	AntHomeOutOfFood,
+	CommenceSearching,
+	FoundNestingSite,
+	DieOfOldAge
 }

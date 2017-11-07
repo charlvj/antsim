@@ -5,7 +5,11 @@
  */
 package com.charlware.ants.ui;
 
+import com.charlware.ants.AntHome;
 import com.charlware.ants.World;
+import com.charlware.ants.WorldListener;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 
 /**
  *
@@ -26,16 +30,41 @@ public class SimAnt extends javax.swing.JFrame implements SimulationStepListener
 		initComponents();
 		
 		initBoard();
+		
+		setDefaults();
 	}
 
 	private void initWorld() {
-		world = new World(20);
+		world = new World(80);
 	}
 	
 	private void initBoard() {
 		pnlWorld = new WorldPanel(world);
 		pnBoardScrollPane.setViewportView(pnlWorld);
 		pnlWorld.addStepListener(this);
+		
+		StatsModel model = new StatsModel(world);
+		tbStats.setModel(model);
+		
+		tbStats.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+			@Override
+			public void valueChanged(ListSelectionEvent e) {
+				System.out.println("Selecting: " + e.toString());
+				if(!e.getValueIsAdjusting()) {
+					AntHome antHome = model.getAntHome(tbStats.getSelectedRow());
+					System.out.println("AntHome: " + antHome.getId());
+					pnlWorld.setHighlightedAntHome(antHome);
+				}
+			}
+		});
+		
+		pack();
+		invalidate();
+	}
+	
+	private void setDefaults() {
+		spNumFoodSources.setValue(300);
+		spNumFoodSourcesStateChanged(null);
 	}
 	
 	/**
@@ -52,13 +81,15 @@ public class SimAnt extends javax.swing.JFrame implements SimulationStepListener
         txSteps = new javax.swing.JTextField();
         txAnts = new javax.swing.JTextField();
         jLabel3 = new javax.swing.JLabel();
-        txAntHomeFood = new javax.swing.JTextField();
+        txAntHomes = new javax.swing.JTextField();
         pnBoardScrollPane = new javax.swing.JScrollPane();
         jPanel2 = new javax.swing.JPanel();
         jLabel4 = new javax.swing.JLabel();
         spNumFoodSources = new javax.swing.JSpinner();
         btStart = new javax.swing.JButton();
         btAddTempFoodSource = new javax.swing.JButton();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        tbStats = new javax.swing.JTable();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -70,7 +101,7 @@ public class SimAnt extends javax.swing.JFrame implements SimulationStepListener
 
         txAnts.setEditable(false);
 
-        jLabel3.setText("AntHome Food:");
+        jLabel3.setText("AntHomes:");
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -86,7 +117,7 @@ public class SimAnt extends javax.swing.JFrame implements SimulationStepListener
                         .addGap(18, 18, 18)
                         .addComponent(jLabel3)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(txAntHomeFood, javax.swing.GroupLayout.PREFERRED_SIZE, 56, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(txAntHomes, javax.swing.GroupLayout.PREFERRED_SIZE, 56, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(jLabel2)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -101,7 +132,7 @@ public class SimAnt extends javax.swing.JFrame implements SimulationStepListener
                     .addComponent(jLabel1)
                     .addComponent(txSteps, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel3)
-                    .addComponent(txAntHomeFood, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(txAntHomes, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel2)
@@ -137,16 +168,13 @@ public class SimAnt extends javax.swing.JFrame implements SimulationStepListener
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addComponent(jLabel4)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(spNumFoodSources, javax.swing.GroupLayout.PREFERRED_SIZE, 48, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(btAddTempFoodSource, javax.swing.GroupLayout.DEFAULT_SIZE, 200, Short.MAX_VALUE))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(btStart)))
+                .addComponent(jLabel4)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(spNumFoodSources, javax.swing.GroupLayout.PREFERRED_SIZE, 57, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(btAddTempFoodSource)
+                .addGap(18, 18, 18)
+                .addComponent(btStart, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addContainerGap())
         );
         jPanel2Layout.setVerticalGroup(
@@ -156,11 +184,23 @@ public class SimAnt extends javax.swing.JFrame implements SimulationStepListener
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel4)
                     .addComponent(spNumFoodSources, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(btAddTempFoodSource))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(btStart)
-                .addContainerGap())
+                    .addComponent(btAddTempFoodSource)
+                    .addComponent(btStart))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
+
+        tbStats.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null}
+            },
+            new String [] {
+                "Title 1", "Title 2", "Title 3", "Title 4"
+            }
+        ));
+        jScrollPane1.setViewportView(tbStats);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -169,9 +209,12 @@ public class SimAnt extends javax.swing.JFrame implements SimulationStepListener
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(pnBoardScrollPane, javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jPanel1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 422, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(pnBoardScrollPane))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -180,9 +223,11 @@ public class SimAnt extends javax.swing.JFrame implements SimulationStepListener
                 .addContainerGap()
                 .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(pnBoardScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 289, Short.MAX_VALUE)
+                .addComponent(pnBoardScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 331, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                    .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
 
@@ -261,9 +306,11 @@ public class SimAnt extends javax.swing.JFrame implements SimulationStepListener
     private javax.swing.JLabel jLabel4;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
+    private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane pnBoardScrollPane;
     private javax.swing.JSpinner spNumFoodSources;
-    private javax.swing.JTextField txAntHomeFood;
+    private javax.swing.JTable tbStats;
+    private javax.swing.JTextField txAntHomes;
     private javax.swing.JTextField txAnts;
     private javax.swing.JTextField txSteps;
     // End of variables declaration//GEN-END:variables
@@ -272,6 +319,6 @@ public class SimAnt extends javax.swing.JFrame implements SimulationStepListener
 	public void simulationStepped() {
 		txSteps.setText(""+(++numSteps));
 		txAnts.setText(""+world.getAnts().size());
-		txAntHomeFood.setText(""+world.getAntHome().getFoodStorage().getCurrent());
+		txAntHomes.setText(""+world.getAntHomes().size());
 	}
 }

@@ -73,6 +73,14 @@ public class FoodStorage extends MatrixMappableEntity implements DynamicEntity {
 		return current > 0;
 	}
 	
+	public boolean isFull() {
+		return getSpaceLeft() == 0;
+	}
+	
+	public boolean isEmpty() {
+		return !hasFood();
+	}
+	
 	public int add(int amount) {
 		current += amount;
 		int overflow = 0;

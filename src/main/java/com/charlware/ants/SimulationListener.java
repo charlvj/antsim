@@ -9,8 +9,6 @@ package com.charlware.ants;
  *
  * @author CVanJaarsveldt
  */
-public class HitAWallException extends Exception {
-	public HitAWallException(String msg) {
-		super(msg);
-	}
+public interface SimulationListener {
+	void stepped();
 }

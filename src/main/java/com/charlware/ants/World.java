@@ -6,6 +6,8 @@
 package com.charlware.ants;
 
 import com.charlware.ants.ant.Ant;
+import com.charlware.ants.ant.QueenAnt;
+import com.charlware.ants.ant.WorkerAnt;
 import com.charlware.ants.sim.Location;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,28 +26,25 @@ import java.util.Map;
  */
 public final class World {
 	private final int size;
-	private final Random random = new Random();
+	public static final Random random = new Random();
 	
-	private final AntHome antHome;
+	private final Map<Location, AntHome> antHomeLocations = new HashMap<>();
+	private final List<AntHome> antHomes = new ArrayList<>();
 	private int antId = 0;
 	private final List<Ant> ants = new ArrayList<>(10);
-	private final List<FoodStorage> foodSources = new ArrayList<>(5);
+	private final List<FoodStorage> foodSources = new ArrayList<>(100);
 	private final Map<MatrixLocation, Marker> markers = new HashMap<>();
 	
 	private final ArrayDeque<Runnable> actionQueue = new ArrayDeque<>();
 	
+	private final List<WorldListener> listeners = new ArrayList<>();
+	
 	public World(int size) {
 		this.size = size;
-		antHome = new AntHome(this);
-		antHome.setLocation(size / 2, size / 2);
 		
+		// Create initial anthome
+		createAntHome(size/2, size/2);
 		
-		createAnt();
-		
-//		int numFoodSources = size * 2;
-//		for(int i = 0; i < numFoodSources; i++) {
-//			addStableFoodSource();
-//		}
 		
 	}
 	
@@ -53,29 +52,78 @@ public final class World {
 		return size;
 	}
 	
-	public void createAnt() {
+	
+	public void createAntHome() {
+		createAntHome(random.nextInt(size), random.nextInt(size));
+	}
+	
+	public AntHome getAntHomeAt(Location location) {
+		return antHomeLocations.get(location);
+	}
+	
+	public List<AntHome> getAntHomes() {
+		return antHomes;
+	}
+	
+	public void createAntHome(final int x, final int y) {
+		createAntHome(Location.at(x, y));
+	}
+	
+	public void createAntHome(final Location location) {
 		actionQueue.add(() -> {
-			ants.add(new Ant(this, antId++, antHome.getX(), antHome.getY()));
+			AntHome home = new AntHome(this);
+			home.setLocation(location);
+			
+			antHomes.add(home);
+			antHomeLocations.put(location, home);
+			createAnt(home);
+			
+			fireAntHomeCreated(home);
+		});
+	}
+	
+	public void removeAntHome(AntHome home) {
+		actionQueue.add(() -> {
+			antHomeLocations.remove(home.getLocation());
+			fireAntHomeRemoved(home);
+		});	
+	}
+	
+	public void createAnt(AntHome antHome) {
+		actionQueue.add(() -> {
+			Ant ant = new WorkerAnt(antHome, antId++, antHome.getX(), antHome.getY());
+			ants.add(ant);
+			antHome.addAnt(ant);
+		});
+	}
+	
+	public void createQueenAnt(AntHome antHome) {
+		actionQueue.add(() -> {
+			Ant queen = new QueenAnt(antHome, antId++);
+			ants.add(queen);
+			antHome.addAnt(queen);
 		});
 	}
 	
 	public void removeAnt(Ant ant) {
 		actionQueue.add(() -> {
 			ants.remove(ant);
+			ant.getAntHome().removeAnt(ant);
 		});
 	}
 	
-	public void antDied(Ant ant) {
+	public void antDied(WorkerAnt ant) {
 		// Have the ant drop its payload
 		actionQueue.add(() -> {
 			FoodStorage fs;
-			if(antHome.getLocation().equals(ant.getLocation())) {
+			AntHome antHome = getAntHomeAt(ant.getLocation());
+			if(antHome != null) {
 				fs = antHome.getFoodStorage();
 			}
 			else {
 				fs = getFoodStorage(ant);
 			}
-			int f = Ant.FOOD_VALUE;
+			int f = WorkerAnt.FOOD_VALUE;
 			int c = ant.getFoodStorage().getCurrent();
 			int t = f + c;
 			System.out.print("Ant Died. Available food: " + t + ". ");
@@ -139,7 +187,8 @@ public final class World {
 	
 	public MappableEntity getEntityAt(int x, int y) {
 		Location loc = Location.at(x, y);
-		if(antHome.getLocation().equals(loc)) {
+		AntHome antHome = getAntHomeAt(loc);
+		if(antHome != null) {
 			return antHome;
 		}
 		for(FoodStorage fs: foodSources) {
@@ -176,7 +225,7 @@ public final class World {
 		ants.forEach(ant -> ant.step());
 		markers.values().forEach(marker -> marker.step());
 		markers.entrySet().removeIf(entry -> entry.getValue().getStrength() == 0);
-		antHome.step();
+		antHomeLocations.values().forEach(antHome -> antHome.step());
 		foodSources.forEach(fs -> fs.step());
 		
 		while(true) {
@@ -185,10 +234,24 @@ public final class World {
 		
 			r.run();
 		}
+		
+		fireStepped();
 	}
 	
-	public AntHome getAntHome() {
-		return antHome;
+	public Location getClosestAntHomeEntrance(WorkerAnt me) {
+		AntHome antHome = me.getAntHome();
+		Location loc = me.getLocation();
+		List<AntHomeEntrance> entrances = antHome.getEntrances();
+		MatrixMappableEntity closest = antHome;
+		double closestDistance = loc.getDistanceTo(closest.getLocation());
+		for(AntHomeEntrance entrance: entrances) {
+			double distance = loc.getDistanceTo(entrance.getLocation());
+			if(distance < closestDistance) {
+				closest = entrance;
+				closestDistance = distance;
+			}
+		}
+		return closest.getLocation();
 	}
 	
 	public void setMyLocation(MappableEntity me, int x, int y) throws HitAWallException {
@@ -223,6 +286,26 @@ public final class World {
 	
 	public void placeMarker(Marker marker) {
 		markers.put((MatrixLocation) marker.getLocation(), marker);
+	}
+	
+	public void addWorldListeners(WorldListener listener) {
+		listeners.add(listener);
+	}
+	
+	public void removeWorldListeners(WorldListener listener) {
+		listeners.remove(listener);
+	}
+	
+	protected void fireAntHomeCreated(AntHome antHome) {
+		listeners.forEach(l -> l.antHomeCreated(antHome));
+	}
+	
+	protected void fireAntHomeRemoved(AntHome antHome) {
+		listeners.forEach(l -> l.antHomeRemoved(antHome));
+	}
+	
+	protected void fireStepped() {
+		listeners.forEach(l -> l.stepped());
 	}
 	
 	public static void main(String[] args) throws InterruptedException {

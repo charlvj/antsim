@@ -9,8 +9,8 @@ package com.charlware.ants;
  *
  * @author CVanJaarsveldt
  */
-public class HitAWallException extends Exception {
-	public HitAWallException(String msg) {
-		super(msg);
-	}
+public interface WorldListener {
+	void antHomeCreated(AntHome antHome);
+	void antHomeRemoved(AntHome antHome);
+	void stepped();
 }

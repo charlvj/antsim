@@ -9,17 +9,12 @@ package com.charlware.ants.ant;
  *
  * @author CVanJaarsveldt
  */
-public enum AntState {
-	Wandering,
-	CollectingFood,
-	GoingHomeWithMarkers,
-	StoringFood,
-	FollowingMarker,
-	GoingHomeNoMarkers,
-	Eating,
-	Dead,
-	DesperateForFood,
-	PreparingForDeparture,
-	SearchingForNestingSite,
-	Nesting
+public abstract class AntAction {
+	protected final Ant ant;
+	
+	public AntAction(final Ant ant) {
+		this.ant = ant;
+	}
+	
+	public abstract boolean stepAction();
 }

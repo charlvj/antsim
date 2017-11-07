@@ -5,228 +5,69 @@
  */
 package com.charlware.ants.ant;
 
+import com.charlware.ants.AntHome;
 import com.charlware.ants.FoodStorage;
 import com.charlware.ants.HitAWallException;
 import com.charlware.ants.MapDirection;
-import com.charlware.ants.Marker;
 import com.charlware.ants.World;
 import com.charlware.ants.sim.DynamicEntity;
-import com.charlware.ants.sim.MatrixLocation;
 import com.charlware.ants.sim.MatrixMappableEntity;
 import com.github.oxo42.stateless4j.StateMachine;
-import com.github.oxo42.stateless4j.StateMachineConfig;
-import java.util.Random;
+import static com.charlware.ants.ant.WorkerAnt.DEFAULT_EAT_SPEED;
 
 /**
  *
  * @author CVanJaarsveldt
  */
-public class Ant extends MatrixMappableEntity implements DynamicEntity {
+public abstract class Ant extends MatrixMappableEntity implements DynamicEntity {
 	
-	public static int FOOD_VALUE = 500;
+	public static int DEFAULT_FULL_TUMMY = 50;
+	public static int DEFAULT_HUNGRY_TUMMY = 0;
+	public static int DEFAULT_DEAD_TUMMY = -100;
+	public static int DEFAULT_EAT_SPEED = 4;
+	/*
+	Give the ant a long life. This should help to get the size of the
+	colony more proportional to the amount of food available. Age helps
+	to "recycle" the ants when the colony reaches its limit, ensuring 
+	that queens keeps coming forth.
+	*/
+	public static int DEFAULT_AGE_LIMIT = 20_000; // steps
 	
-	public static int FULL_TUMMY = 50;
-	public static int HUNGRY_TUMMY = 0;
-	public static int DEAD_TUMMY = -100;
 	
-	public static int STORAGE_CAPACITY = 75;
+	protected final int id;
+	protected final FoodStorage storage;
+	protected final AntHome home;
+	protected final World world;
+	protected final StateMachine<AntState,AntTrigger> state;
 	
-	public static int COLLECT_SPEED = 7;
-	public static int STORE_SPEED = 20;
-	public static int EAT_SPEED = 4;
-	
+	protected int tummyLevel = DEFAULT_FULL_TUMMY;
 	private boolean showMsgs = false;
+	protected int currentAge = 0;
 	
-	private final int id;
-	private final StateMachine<AntState,AntTrigger> state;
-	private final FoodStorage storage;
-	private final World world;
-	private int tummyLevel = FULL_TUMMY;
-	private int deadCounter = 0;
-	
-	private static Random random = new Random();
-	
-	public static final StateMachineConfig<AntState,AntTrigger> smconfig = new StateMachineConfig<>();
-	
-	static {
-		// Setup the state machine
-		smconfig.configure(AntState.Wandering)
-			.permit(AntTrigger.FoundFood, AntState.CollectingFood)
-			.permit(AntTrigger.FoundMarker, AntState.FollowingMarker)
-			.permit(AntTrigger.GotHungry, AntState.GoingHomeNoMarkers)
-			.permit(AntTrigger.Starved, AntState.Dead);
-		
-		smconfig.configure(AntState.CollectingFood)
-			.permit(AntTrigger.OutOfSpace, AntState.GoingHomeWithMarkers)
-			.permit(AntTrigger.NoFoodLeft, AntState.Wandering);
-		
-		smconfig.configure(AntState.GoingHomeWithMarkers)
-			.permit(AntTrigger.ReachHome, AntState.StoringFood);
-		
-		smconfig.configure(AntState.StoringFood)
-			.permit(AntTrigger.Done, AntState.Wandering);
-		
-		smconfig.configure(AntState.FollowingMarker)
-			.permit(AntTrigger.FoundFood, AntState.CollectingFood)
-			.permitReentry(AntTrigger.FoundMarker)
-			.permit(AntTrigger.GotHungry, AntState.GoingHomeNoMarkers)
-			.permit(AntTrigger.LostMarker, AntState.Wandering);
-		
-		smconfig.configure(AntState.GoingHomeNoMarkers)
-			.permit(AntTrigger.ReachHome, AntState.Eating)
-			.permit(AntTrigger.Starved, AntState.Dead);
-		
-		smconfig.configure(AntState.Eating)
-			.permit(AntTrigger.Done, AntState.Wandering)
-			.permit(AntTrigger.AntHomeOutOfFood, AntState.DesperateForFood)
-			.permit(AntTrigger.Starved, AntState.Dead);
-		
-		smconfig.configure(AntState.DesperateForFood)
-			.permit(AntTrigger.FoundFood, AntState.CollectingFood)
-			.permit(AntTrigger.ReachHome, AntState.Eating)
-			.permit(AntTrigger.FoundMarker, AntState.FollowingMarker)
-			.permit(AntTrigger.Starved, AntState.Dead);
-	}
-	
-	public Ant(World world, int id) {
+	public Ant(final int id, final AntHome home, final int storageCapacity, StateMachine<AntState,AntTrigger> stateMachine) {
 		this.id = id;
-		this.state = new StateMachine<>(AntState.Wandering, smconfig);
-		this.world = world;
-		storage = new FoodStorage(world, STORAGE_CAPACITY);
-	}
-	
-	public Ant(World world, int id, int x, int y) {
-		this(world, id);
-		setLocation(x, y);
+		this.home = home;
+		this.world = home.getWorld();
+		this.storage = new FoodStorage(world, storageCapacity);
+		this.state = stateMachine;
+		setLocation(home.getLocation());
 	}
 	
 	public int getId() {
 		return id;
 	}
 	
-	public AntState getCurrentState() {
-		return state.getState();
+	protected void print(String msg) {
+		if(showMsgs) 
+			System.out.print(msg);
 	}
 	
-	public FoodStorage getFoodStorage() {
-		return storage;
+	protected void println(String msg) {
+		if(showMsgs) 
+			System.out.println(msg);
 	}
 	
-	public boolean isHungry() {
-		return tummyLevel <= HUNGRY_TUMMY;
-	}
-	
-	public boolean isStarved() {
-		return tummyLevel <= DEAD_TUMMY;
-	}
-	
-	public boolean amIHome() {
-		return world.getAntHome().getLocation().equals(getLocation());
-	}
-	
-	public void step() {
-		if(state.getState() != AntState.Eating) tummyLevel--;
-		switch(state.getState()) {
-			case Wandering:
-				if(isHungry()) {
-					println("Getting Hungry");
-					state.fire(AntTrigger.GotHungry);
-				}
-				else if(isStarved()) {
-					println("Starved!");
-					state.fire(AntTrigger.Starved);
-				}
-				else if(world.didIFindFood(this)) {
-					println("Found Food!");
-					state.fire(AntTrigger.FoundFood);
-				}
-				else if(world.didIFindAMarker(this)) {
-					println("Found a Marker!");
-					state.fire(AntTrigger.FoundMarker);
-				}
-				else {
-					wander();
-				}
-				break;
-			case CollectingFood:
-				collectFood();
-				break;
-			case GoingHomeWithMarkers:
-				if(world.getAntHome().getLocation().equals(getLocation())) {
-					// I'm home
-					state.fire(AntTrigger.ReachHome);
-				}
-				else {
-					goHome(true);
-				}
-				break;
-			case GoingHomeNoMarkers:
-				if(isStarved()) {
-					println("Starved!");
-					state.fire(AntTrigger.Starved);
-				}
-				else if(world.getAntHome().getLocation().equals(getLocation())) {
-					// I'm home
-					state.fire(AntTrigger.ReachHome);
-				}
-				else {
-					goHome(false);
-				}
-				break;
-			case StoringFood:
-				storeFood();
-				break;
-			case Eating:
-				if(isStarved()) {
-					println("Starved!");
-					state.fire(AntTrigger.Starved);
-				}
-				else {
-					eat();
-				}
-				break;
-			case FollowingMarker:
-				if(world.didIFindFood(this)) {
-					println("Found Food!");
-					state.fire(AntTrigger.FoundFood);
-				}
-				else {
-					followMarker(world.getMarker(this));
-				}
-				break;
-			case DesperateForFood:
-				if(world.didIFindFood(this)) {
-					println("Found Food!");
-					state.fire(AntTrigger.FoundFood);
-				}
-				else if(world.didIFindAMarker(this)) {
-					println("Found a Marker!");
-					state.fire(AntTrigger.FoundMarker);
-				}
-				else if(amIHome() && world.getAntHome().getFoodStorage().hasFood()) {
-					println("Found AntHome");
-					state.fire(AntTrigger.ReachHome);
-				}
-				else if(isStarved()) {
-					println("Starved!");
-					state.fire(AntTrigger.Starved);
-				}
-				else {
-					wander();
-				}
-				break;
-			case Dead:
-				if(deadCounter == 0) world.antDied(this);
-				deadCounter++;
-				if(deadCounter > 100) {
-					world.removeAnt(this);
-				}
-				break;
-		}
-	}
-	
-	
-	private void move(MapDirection direction) throws HitAWallException {
+	protected void move(MapDirection direction) throws HitAWallException {
 		int x = getX();
 		int y = getY();
 		switch(direction) {
@@ -245,51 +86,30 @@ public class Ant extends MatrixMappableEntity implements DynamicEntity {
 		}
 		world.setMyLocation(this, x, y);
 	}
-	
-	private void wander() {
-		int directionInt = random.nextInt(4);
-		MapDirection direction = MapDirection.values()[directionInt];
-		print("Trying to move " + direction + "... ");
-		try {
-			move(direction);
-			println("Moved to " + getX() + "; " + getY());
-		} catch (HitAWallException ex) {
-			// Just sit here and wonder what to do for now...
-			println("Staying put: I hit a wall.");
-		}
-	}
-	
-	private void collectFood() {
-		println("Collecting Food");
-		FoodStorage fs = world.getFoodStorage(this);
-		if(fs == null) {
-			state.fire(AntTrigger.NoFoodLeft);
-			return;
-		}
-		int f = fs.take(COLLECT_SPEED);
-		if(f == 0) {
-			state.fire(AntTrigger.NoFoodLeft);
-			return;
-		}
-		storage.add(f);
-		if(!storage.hasSpace()) {
-			state.fire(AntTrigger.OutOfSpace);
-		}
-	}
-	
-	private void storeFood() {
-		println("Storing Food");
-		int f = storage.take(STORE_SPEED);
-		if(f == 0) {
-			state.fire(AntTrigger.Done);
-			return;
-		}
-		world.getAntHome().getFoodStorage().add(f);
-	}
 
-	private void eat() {
+	protected int getEatSpeed() {
+		return DEFAULT_EAT_SPEED;
+	}
+	
+	protected int getFullTummy() {
+		return DEFAULT_FULL_TUMMY;
+	}
+	
+	protected int getHungryTummy() {
+		return DEFAULT_HUNGRY_TUMMY;
+	}
+	
+	protected int getDeadTummy() {
+		return DEFAULT_DEAD_TUMMY;
+	}
+	
+	protected int getAgeLimit() {
+		return DEFAULT_AGE_LIMIT;
+	}
+	
+	protected void eat() {
 		print("Eating   ");
-		int f = world.getAntHome().getFoodStorage().take(EAT_SPEED);
+		int f = home.getFoodStorage().take(getEatSpeed());
 		if(f == 0) {
 			println("No food in AntHome!");
 			state.fire(AntTrigger.AntHomeOutOfFood);
@@ -297,92 +117,49 @@ public class Ant extends MatrixMappableEntity implements DynamicEntity {
 		else {
 			tummyLevel += f;
 			println("+1 = " + tummyLevel);
-			if(tummyLevel >= FULL_TUMMY) {
+			if(tummyLevel >= getFullTummy()) {
 				state.fire(AntTrigger.Done);
 			}
 		}
 	}
-	
-	public void goHome(boolean leaveMarkers) {
-		MatrixLocation antHomeLocation = (MatrixLocation) world.getAntHome().getLocation();
-		MapDirection direction = MapDirection.Nowhere;
-		
-		int dx = antHomeLocation.getX() - getX();
-		int dy = antHomeLocation.getY() - getY();
-		
-		int newX = getX();
-		int newY = getY();
-		
-		if(dx == 0 && dy == 0) {
-			// We're there!
-		}
-		else if(dx == 0 && dy > 0) {
-			// Move down
-			direction = MapDirection.Down;
-		}
-		else if(dx == 0 && dy < 0) {
-			// Move up
-			direction = MapDirection.Up;
-		}
-		else if(dx > 0 && dy == 0) {
-			// Move right
-			direction = MapDirection.Right;
-		}
-		else if(dx < 0 && dy == 0) {
-			// Move left
-			direction = MapDirection.Left;
-		}
-		else if(dx < 0 && dy < 0) {
-			if(dx < dy) direction = MapDirection.Left;
-			else direction = MapDirection.Up;
-		}
-		else if(dx < 0 && dy > 0) {
-			if(Math.abs(dx) > dy) direction = MapDirection.Left;
-			else direction = MapDirection.Down;
-		}
-		else if(dx > 0 && dy < 0) {
-			if(dx > Math.abs(dy)) direction = MapDirection.Right;
-			else direction = MapDirection.Up;
-		}
-		else if(dx > 0 && dy > 0) {
-			if(dx > dy) direction = MapDirection.Right;
-			else direction = MapDirection.Down;
-		}
-		
-		print("Trying to move " + direction + "... ");
-		try {
-			move(direction);
-			print("\tMoved to " + getX() + "; " + getY());
-			if(leaveMarkers && !amIHome()) {
-				Marker marker = new Marker(direction.opposite(), getLocation());
-				world.placeMarker(marker);
-				print(".\tPlaced Marker (" + marker + "). ");
-			}
-			println("");
-		} catch (HitAWallException ex) {
-			// Just sit here and wonder what to do for now...
-			println("Staying put: I hit a wall.");
-		}
+
+	protected boolean isTooOld() {
+		return currentAge > getAgeLimit();
 	}
 	
-	private void followMarker(Marker marker) {
-		if(marker == null) {
-			println("Lost Marker. Return to wandering.");
-			state.fire(AntTrigger.LostMarker);
-			return;
-		}
-		print("Following Marker " + marker.getDirection() + "... ");
-		try {
-			move(marker.getDirection());
-			println("Moved to " + getX() + "; " + getY());
-		} catch (HitAWallException ex) {
-			// Just sit here and wonder what to do for now...
-			println("Staying put: I hit a wall. Return to wandering.");
-//			state.fire(AntTrigger.);
-		}
-		
+	public AntState getCurrentState() {
+		return state.getState();
 	}
 	
+	public FoodStorage getFoodStorage() {
+		return storage;
+	}
+	
+	public boolean isHungry() {
+		return tummyLevel <= getHungryTummy();
+	}
+	
+	public boolean isStarved() {
+		return tummyLevel <= getDeadTummy();
+	}
+	
+	public boolean amIHome() {
+		return home.getLocation().equals(getLocation());
+	}
+	
+	public AntHome getAntHome() {
+		return home;
+	}
+	
+	public void step() {
+		if(state.getState() != AntState.Eating) tummyLevel--;
+		
+		currentAge++;
+		if(isTooOld() && state.canFire(AntTrigger.DieOfOldAge)) {
+			state.fire(AntTrigger.DieOfOldAge);
+		}
+	}
+
 	@Override
 	public int hashCode() {
 		return id;
@@ -396,19 +173,23 @@ public class Ant extends MatrixMappableEntity implements DynamicEntity {
 		
 		return id == a.id;
 	}
+
+}
+
+
+class Tummy {
+	private int tummyLevel;
+	private int energyToFood = 4;   // steps per unit of food
 	
-	private void print(String msg) {
-		if(showMsgs) 
-			System.out.print(msg);
+	public Tummy(int tummyLevel) {
+		this.tummyLevel = tummyLevel;
 	}
 	
-	private void println(String msg) {
-		if(showMsgs) 
-			System.out.println(msg);
+	public void addFood(int food) {
+		tummyLevel += food;
 	}
 	
-	@Override
-	public String toString() {
-		return "Ant  #" + id + "; " + getCurrentState() + "; food:" + storage.getCurrent();
+	public void step() {
+		
 	}
 }

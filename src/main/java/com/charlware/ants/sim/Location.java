@@ -16,4 +16,6 @@ public interface Location {
 			default: throw new UnsupportedOperationException("A location with " + c.length + " dimensions are not supported through this factory method.");
 		}
 	}
+	
+	public double getDistanceTo(Location other);
 }

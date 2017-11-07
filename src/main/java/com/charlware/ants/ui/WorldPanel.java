@@ -5,10 +5,12 @@
  */
 package com.charlware.ants.ui;
 
+import com.charlware.ants.AntHome;
 import com.charlware.ants.FoodStorage;
 import com.charlware.ants.Marker;
 import com.charlware.ants.World;
 import com.charlware.ants.ant.Ant;
+import com.charlware.ants.ant.QueenAnt;
 import com.charlware.ants.sim.MappableEntity;
 import com.charlware.ants.sim.MatrixLocation;
 import java.awt.BorderLayout;
@@ -21,19 +23,22 @@ import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.JViewport;
+import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 
 /**
  *
  * @author CVanJaarsveldt
  */
-public class WorldPanel extends JPanel implements MouseListener {
+public class WorldPanel extends JPanel {
 	
 	public static int multiplier = 12;
 	
@@ -45,13 +50,20 @@ public class WorldPanel extends JPanel implements MouseListener {
 	
 	private List<SimulationStepListener> stepListeners = new ArrayList<>(5);
 	
+	private AntHome highlightedAntHome = null;
+	
+	
+	private Font small = new Font("Helvetica", Font.PLAIN, multiplier);
+	private Font bold = small.deriveFont(Font.BOLD);
+	
 	public WorldPanel(World world) {
 		this.world = world;
 		
-		addMouseListener(this);
+//		addMouseListener(this);
+		setupMouseListener();
 		
 		timer = new Timer(100, (e) -> {
-			world.step();
+			world.step();			
 			repaint();
 			fireStepEvent();
 		});
@@ -64,6 +76,10 @@ public class WorldPanel extends JPanel implements MouseListener {
 	
 	public void stop() {
 		timer.stop();
+	}
+	
+	public void setHighlightedAntHome(AntHome antHome) {
+		this.highlightedAntHome = antHome;
 	}
 	
 	private int getScreenX(int x) {
@@ -84,7 +100,15 @@ public class WorldPanel extends JPanel implements MouseListener {
 	
 	@Override
 	public Dimension getPreferredSize() {
-		return new Dimension(world.getSize(), world.getSize());
+		int width = world.getSize() * multiplier;
+		Dimension dim = new Dimension(width, width);
+		System.out.println("Dimension: " + dim);
+		return dim;
+	}
+	
+	@Override
+	public Dimension getSize() {
+		return getPreferredSize();
 	}
 	
 	private boolean isTracked(MappableEntity o) {
@@ -107,28 +131,42 @@ public class WorldPanel extends JPanel implements MouseListener {
 		g.drawString(entity.toString(), getScreenX(loc.getX()), getScreenY(loc.getY() + 1));
 	}
 	
-	public void drawWorld(Graphics2D g) {
-		Font small = new Font("Helvetica", Font.PLAIN, multiplier);
-		FontMetrics mtr = getFontMetrics(small);
-		g.setFont(small);
-		int size = world.getSize();
-//		for(int r = 0; r < size; r++) {
-//			for(int c = 0; c < size; c++) {
-//				g.drawString(".", getScreenX(c), getScreenY(r));
-//			}
-//		}
-
-		List<Ant> ants = world.getAnts();
-		for(Ant ant: ants) {
+	private void drawAntHome(Graphics2D g, AntHome antHome) {
+		// Highlight the whole ant home.
+		if(antHome.equals(highlightedAntHome)) {
+			g.setFont(bold);
+		}
+		
+		for(Ant ant: antHome.getAnts()) {
 			if(ant.isHungry()) {
 				g.setColor(Color.RED);
 			}
 			else {
 				g.setColor(Color.BLUE);
 			}
+			String ch = ant instanceof QueenAnt ? "q" : "a";
 			//g.drawString("a", getScreenX(ant.getX()), getScreenY(ant.getY()));
-			drawEntity(g, "a", ant);
+			drawEntity(g, ch, ant);
 		}
+		
+		g.setColor(Color.BLACK);
+		drawEntity(g, "H", antHome);
+		
+		// Reset the font
+		g.setFont(small);
+	}
+	
+	public void drawWorld(Graphics2D g) {
+		g.setFont(small);
+		int size = world.getSize();
+
+//		for(int r = 0; r < size; r++) {
+//			for(int c = 0; c < size; c++) {
+//				g.drawString(".", getScreenX(c), getScreenY(r));
+//			}
+//		}
+
+		
 
 		
 		for(FoodStorage fs: world.getFoodSources()) {
@@ -143,9 +181,17 @@ public class WorldPanel extends JPanel implements MouseListener {
 			drawEntity(g, ".", marker);
 		}
 		
-		g.setColor(Color.BLACK);
 		//g.drawString("H", getScreenX(antHome.getX()), getScreenY(antHome.getY()));
-		drawEntity(g, "H", world.getAntHome());
+		
+		for(AntHome antHome: world.getAntHomes()) {
+			drawAntHome(g, antHome);
+//			g.setColor(Color.BLACK);
+//			if(antHome.equals(highlightedAntHome)) {
+//				g.setFont(bold);
+//			}
+//			drawEntity(g, "H", antHome);
+//			g.setFont(small);
+		}
 		
 		for(MappableEntity entity: tracked) {
 			drawInfo(g, entity);
@@ -184,48 +230,65 @@ public class WorldPanel extends JPanel implements MouseListener {
 		});
 	}
 
-	@Override
-	public void mouseClicked(MouseEvent e) {
-		int button = e.getButton();
-		Point p = e.getPoint();
-		int x = getWorldX(p.x);
-		int y = getWorldY(p.y);
-		
-		//System.out.println("Mouse Clicked: " + p + ":   " + x + ";" + y);
-		
-		if(button == MouseEvent.BUTTON1) {
-			MappableEntity o = world.getEntityAt(x, y);
-			if(o != null) {
-				System.out.println(o);
-				if(tracked.contains(o)) {
-					tracked.remove(o);
-				}
-				else {
-					tracked.add(o);
+	
+	public void setupMouseListener() {
+		MouseAdapter ma = new MouseAdapter() {
+			private Point origin;
+			
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				int button = e.getButton();
+				Point p = e.getPoint();
+				int x = getWorldX(p.x);
+				int y = getWorldY(p.y);
+
+				//System.out.println("Mouse Clicked: " + p + ":   " + x + ";" + y);
+
+				if(button == MouseEvent.BUTTON1) {
+					MappableEntity o = world.getEntityAt(x, y);
+					if(o != null) {
+						System.out.println(o);
+						if(tracked.contains(o)) {
+							tracked.remove(o);
+						}
+						else {
+							tracked.add(o);
+						}
+					}
 				}
 			}
-		}
+			
+			@Override
+			public void mousePressed(MouseEvent e) {
+				origin = e.getPoint();
+			}
+
+			@Override
+			public void mouseReleased(MouseEvent e) {
+
+			}
+			
+			@Override
+			public void mouseDragged(MouseEvent e) {
+				if (origin != null) {
+					JViewport viewPort = (JViewport) SwingUtilities.getAncestorOfClass(JViewport.class, WorldPanel.this);
+					if (viewPort != null) {
+						int deltaX = origin.x - e.getX();
+						int deltaY = origin.y - e.getY();
+
+						Rectangle view = viewPort.getViewRect();
+						view.x += deltaX;
+						view.y += deltaY;
+
+						scrollRectToVisible(view);
+					}
+				}
+			}
+
+		};
+		addMouseListener(ma);
+		addMouseMotionListener(ma);
 	}
 
-	@Override
-	public void mousePressed(MouseEvent e) {
-		
-	}
 
-	@Override
-	public void mouseReleased(MouseEvent e) {
-		
-	}
-
-	@Override
-	public void mouseEntered(MouseEvent e) {
-		
-	}
-
-	@Override
-	public void mouseExited(MouseEvent e) {
-		
-	}
-	
-	
 }

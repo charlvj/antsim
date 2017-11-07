@@ -5,12 +5,15 @@
  */
 package com.charlware.ants;
 
+import com.charlware.ants.ant.Ant;
+
 /**
  *
  * @author CVanJaarsveldt
  */
-public class HitAWallException extends Exception {
-	public HitAWallException(String msg) {
-		super(msg);
-	}
+public interface AntHomeListener {
+	void antBorn(AntHome antHome, Ant ant);
+	void antDied(AntHome antHome, Ant ant);
+	void foodStorageEmpty(AntHome antHome);
+	void foodStorageFull(AntHome antHome);
 }
