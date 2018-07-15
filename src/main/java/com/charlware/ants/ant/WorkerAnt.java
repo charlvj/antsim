@@ -1,3 +1,4 @@
+
 /*
  * To change this license header, choose License Headers in Project Properties.
  * To change this template file, choose Tools | Templates
@@ -10,6 +11,7 @@ import com.charlware.ants.FoodStorage;
 import com.charlware.ants.HitAWallException;
 import com.charlware.ants.MapDirection;
 import com.charlware.ants.Marker;
+import com.charlware.ants.sim.DirectionFinder;
 import com.charlware.ants.sim.MatrixLocation;
 import com.github.oxo42.stateless4j.StateMachine;
 import com.github.oxo42.stateless4j.StateMachineConfig;
@@ -51,7 +53,7 @@ public class WorkerAnt extends Ant {
 		smconfig.configure(AntState.GoingHomeWithMarkers)
 			.permit(AntTrigger.ReachHome, AntState.StoringFood)
 			.permit(AntTrigger.DieOfOldAge, AntState.Dead);
-		
+		 
 		smconfig.configure(AntState.StoringFood)
 			.permit(AntTrigger.Done, AntState.Wandering);
 		
@@ -243,7 +245,8 @@ public class WorkerAnt extends Ant {
 
 	public void goHome(boolean leaveMarkers) {
 		MatrixLocation antHomeLocation = (MatrixLocation) world.getClosestAntHomeEntrance(this);
-		MapDirection direction = ((MatrixLocation) getLocation()).getDirectionTo(antHomeLocation);
+//		MapDirection direction = ((MatrixLocation) getLocation()).getDirectionTo(antHomeLocation);
+                MapDirection direction = DirectionFinder.getDirection(getLocation(), antHomeLocation);
 //		MapDirection direction = MapDirection.Nowhere;
 //		
 //		int dx = antHomeLocation.getX() - getX();

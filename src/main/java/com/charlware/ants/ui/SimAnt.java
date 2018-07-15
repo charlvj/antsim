@@ -35,7 +35,7 @@ public class SimAnt extends javax.swing.JFrame implements SimulationStepListener
 	}
 
 	private void initWorld() {
-		world = new World(80);
+		world = new World(50);
 	}
 	
 	private void initBoard() {
@@ -59,11 +59,11 @@ public class SimAnt extends javax.swing.JFrame implements SimulationStepListener
 		});
 		
 		pack();
-		invalidate();
+		revalidate();
 	}
 	
 	private void setDefaults() {
-		spNumFoodSources.setValue(300);
+		spNumFoodSources.setValue(100);
 		spNumFoodSourcesStateChanged(null);
 	}
 	
@@ -236,13 +236,13 @@ public class SimAnt extends javax.swing.JFrame implements SimulationStepListener
 
     private void btStartActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btStartActionPerformed
         if(btStart.getText().equals("Start")) {
-			pnlWorld.start();
-			btStart.setText("Stop");
-		}
-		else {
-			pnlWorld.stop();
-			btStart.setText("Start");
-		}
+            pnlWorld.start();
+            btStart.setText("Stop");
+        }
+        else {
+            pnlWorld.stop();
+            btStart.setText("Start");
+        }
     }//GEN-LAST:event_btStartActionPerformed
 
     private void spNumFoodSourcesStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_spNumFoodSourcesStateChanged
