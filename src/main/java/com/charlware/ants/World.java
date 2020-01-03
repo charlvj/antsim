@@ -8,6 +8,8 @@ package com.charlware.ants;
 import com.charlware.ants.ant.Ant;
 import com.charlware.ants.ant.QueenAnt;
 import com.charlware.ants.ant.WorkerAnt;
+import com.charlware.ants.logs.EventLog;
+import com.charlware.ants.logs.EventType;
 import com.charlware.ants.sim.Location;
 import java.util.ArrayList;
 import java.util.List;
@@ -46,6 +48,8 @@ public final class World {
         private Configuration worldConfig;
         private SimSettings simSettings = new SimSettings();
         
+        private final EventLog eventLog = new EventLog();
+        
         private int failedAntHomes = 0;
 	
 	public World(int size) {
@@ -71,6 +75,10 @@ public final class World {
 	
         public SimSettings getSimSettings() {
             return simSettings;
+        }
+        
+        public EventLog getEventLog() {
+            return eventLog;
         }
         
 	public int getSize() {
@@ -119,6 +127,7 @@ public final class World {
 			Ant ant = new WorkerAnt(antHome, antId++, antHome.getX(), antHome.getY());
 			ants.add(ant);
 			antHome.addAnt(ant);
+                        eventLog.log(antHome, EventType.ANT_BORN);
 		});
 	}
 	
@@ -166,6 +175,8 @@ public final class World {
 				fs.add(t);
 				System.out.println("Added to existing food source: " + fs);
 			}
+                        
+                        eventLog.log(ant.getAntHome(), EventType.ANT_DIED);
                         
                         // Check if this was the last ant of its antHome
                         antHome = ant.getAntHome();
@@ -339,11 +350,13 @@ public final class World {
 	}
 	
 	protected void fireAntHomeCreated(AntHome antHome) {
-		listeners.forEach(l -> l.antHomeCreated(antHome));
+            eventLog.log(antHome, EventType.ANTHOME_FOUNDED);
+            listeners.forEach(l -> l.antHomeCreated(antHome));
 	}
 	
 	protected void fireAntHomeRemoved(AntHome antHome) {
-		listeners.forEach(l -> l.antHomeRemoved(antHome));
+            eventLog.log(antHome, EventType.ANTHOME_ENDED);
+            listeners.forEach(l -> l.antHomeRemoved(antHome));
 	}
 	
 	protected void fireStepped() {

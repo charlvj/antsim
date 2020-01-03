@@ -20,6 +20,7 @@ public class SimAnt extends javax.swing.JFrame implements SimulationStepListener
 	private World world = null;
 	private WorldPanel pnlWorld = null;
 	private int numSteps = 0;
+        private EventLogFrame eventLogFrame = null;
 	
 	/**
 	 * Creates new form SimAnt
@@ -34,6 +35,10 @@ public class SimAnt extends javax.swing.JFrame implements SimulationStepListener
                 initPlugins();
 		
 		setDefaults();
+                
+                eventLogFrame = new EventLogFrame(this);
+                eventLogFrame.setVisible(true);
+                eventLogFrame.setLocationRelativeTo(this);
 	}
 
 	private void initWorld() {
@@ -66,6 +71,10 @@ public class SimAnt extends javax.swing.JFrame implements SimulationStepListener
 		pack();
 		revalidate();
 	}
+        
+        public World getWorld() {
+            return world;
+        }
 	
 	private void setDefaults() {
 		spNumFoodSources.setValue(100);
@@ -101,6 +110,7 @@ public class SimAnt extends javax.swing.JFrame implements SimulationStepListener
         tbStats = new javax.swing.JTable();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setTitle("Ant Simulator");
 
         jLabel1.setText("Steps:");
 
