@@ -9,37 +9,25 @@ import com.charlware.ants.AntHome;
 import com.charlware.ants.FoodStorage;
 import com.charlware.ants.HitAWallException;
 import com.charlware.ants.MapDirection;
+import com.charlware.ants.SimSettings;
 import com.charlware.ants.World;
 import com.charlware.ants.sim.DynamicEntity;
 import com.charlware.ants.sim.MatrixMappableEntity;
 import com.github.oxo42.stateless4j.StateMachine;
-import static com.charlware.ants.ant.WorkerAnt.DEFAULT_EAT_SPEED;
 
 /**
  *
  * @author CVanJaarsveldt
  */
 public abstract class Ant extends MatrixMappableEntity implements DynamicEntity {
-
-    public static int DEFAULT_FULL_TUMMY = 50;
-    public static int DEFAULT_HUNGRY_TUMMY = 0;
-    public static int DEFAULT_DEAD_TUMMY = -100;
-    public static int DEFAULT_EAT_SPEED = 4;
-    /*
-	Give the ant a long life. This should help to get the size of the
-	colony more proportional to the amount of food available. Age helps
-	to "recycle" the ants when the colony reaches its limit, ensuring 
-	that queens keeps coming forth.
-     */
-    public static int DEFAULT_AGE_LIMIT = 20_000; // steps
-
     protected final int id;
     protected final FoodStorage storage;
     protected final AntHome home;
     protected final World world;
+    protected final SimSettings simSettings;
     protected final StateMachine<AntState, AntTrigger> state;
 
-    protected int tummyLevel = DEFAULT_FULL_TUMMY;
+    protected int tummyLevel;
     private boolean showMsgs = false;
     protected int currentAge = 0;
 
@@ -49,6 +37,8 @@ public abstract class Ant extends MatrixMappableEntity implements DynamicEntity 
         this.world = home.getWorld();
         this.storage = new FoodStorage(world, storageCapacity);
         this.state = stateMachine;
+        this.simSettings = world.getSimSettings();
+        this.tummyLevel = simSettings.ant_fullTummy;
         setLocation(home.getLocation());
     }
 
@@ -90,43 +80,23 @@ public abstract class Ant extends MatrixMappableEntity implements DynamicEntity 
         world.setMyLocation(this, x, y);
     }
 
-    protected int getEatSpeed() {
-        return DEFAULT_EAT_SPEED;
-    }
-
-    protected int getFullTummy() {
-        return DEFAULT_FULL_TUMMY;
-    }
-
-    protected int getHungryTummy() {
-        return DEFAULT_HUNGRY_TUMMY;
-    }
-
-    protected int getDeadTummy() {
-        return DEFAULT_DEAD_TUMMY;
-    }
-
-    protected int getAgeLimit() {
-        return DEFAULT_AGE_LIMIT;
-    }
-
     protected void eat() {
         print("Eating   ");
-        int f = home.getFoodStorage().take(getEatSpeed());
+        int f = home.getFoodStorage().take(simSettings.ant_eatSpeed);
         if (f == 0) {
             println("No food in AntHome!");
             state.fire(AntTrigger.AntHomeOutOfFood);
         } else {
             tummyLevel += f;
             println("+1 = " + tummyLevel);
-            if (tummyLevel >= getFullTummy()) {
+            if (tummyLevel >= simSettings.ant_fullTummy){
                 state.fire(AntTrigger.Done);
             }
         }
     }
 
     protected boolean isTooOld() {
-        return currentAge > getAgeLimit();
+        return currentAge > simSettings.ageLimit;
     }
 
     public AntState getCurrentState() {
@@ -138,11 +108,11 @@ public abstract class Ant extends MatrixMappableEntity implements DynamicEntity 
     }
 
     public boolean isHungry() {
-        return tummyLevel <= getHungryTummy();
+        return tummyLevel <= simSettings.ant_hungryTummy;
     }
 
     public boolean isStarved() {
-        return tummyLevel <= getDeadTummy();
+        return tummyLevel <= simSettings.ant_deadTummy;
     }
 
     public boolean amIHome() {

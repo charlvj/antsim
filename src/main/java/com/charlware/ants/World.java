@@ -44,6 +44,7 @@ public final class World {
 	private final List<WorldListener> listeners = new ArrayList<>();
         
         private Configuration worldConfig;
+        private SimSettings simSettings = new SimSettings();
         
         private int failedAntHomes = 0;
 	
@@ -68,6 +69,10 @@ public final class World {
             return worldConfig;
         }
 	
+        public SimSettings getSimSettings() {
+            return simSettings;
+        }
+        
 	public int getSize() {
 		return size;
 	}
@@ -143,7 +148,7 @@ public final class World {
 			else {
 				fs = getFoodStorage(ant);
 			}
-			int f = WorkerAnt.FOOD_VALUE;
+			int f = simSettings.workerant_foodValue;
 			int c = ant.getFoodStorage().getCurrent();
 			int t = f + c;
 			System.out.print("Ant Died. Available food: " + t + ". ");

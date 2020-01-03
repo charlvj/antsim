@@ -23,13 +23,6 @@ import java.util.Random;
  */
 public class WorkerAnt extends Ant {
 
-    public static int FOOD_VALUE = 500;
-
-    public static int STORAGE_CAPACITY = 75;
-
-    public static int COLLECT_SPEED = 7;
-    public static int STORE_SPEED = 20;
-
     private int deadCounter = 0;
 
     private static Random random = new Random();
@@ -84,7 +77,10 @@ public class WorkerAnt extends Ant {
     }
 
     public WorkerAnt(AntHome home, int id) {
-        super(id, home, STORAGE_CAPACITY, new StateMachine<>(AntState.Wandering, smconfig));
+        super(id, 
+                home, 
+                home.getWorld().getSimSettings().workerant_foodstore_capacity, 
+                new StateMachine<>(AntState.Wandering, smconfig));
     }
 
     public WorkerAnt(AntHome home, int id, int x, int y) {
@@ -211,7 +207,7 @@ public class WorkerAnt extends Ant {
             state.fire(AntTrigger.NoFoodLeft);
             return;
         }
-        int f = fs.take(COLLECT_SPEED);
+        int f = fs.take(simSettings.workerant_food_collectSpeed);
         if (f == 0) {
             state.fire(AntTrigger.NoFoodLeft);
             return;
@@ -224,7 +220,7 @@ public class WorkerAnt extends Ant {
 
     private void storeFood() {
         println("Storing Food");
-        int f = storage.take(STORE_SPEED);
+        int f = storage.take(simSettings.workerant_food_storeSpeed);
         if (f == 0) {
             state.fire(AntTrigger.Done);
             return;

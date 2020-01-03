@@ -21,23 +21,26 @@ import java.util.stream.Stream;
  */
 public class AntHome extends MatrixMappableEntity implements DynamicEntity {
 
-    public static int BIRTH_PERIOD = 200;
-    public static int BIRTH_FOOD_THRESHOLD = 500;
-
     private static int nextId = 1;
     private final int id;
     private final World world;
+    private final SimSettings simSettings;
     private final List<AntHomeEntrance> entrances = new ArrayList<>();
     private final List<Ant> ants = new ArrayList<>();
-    private FoodStorage foodStorage;
-    private int stepsTillNextBirth = BIRTH_PERIOD;
+    private final FoodStorage foodStorage;
+    private int stepsTillNextBirth;
     private int births = 0;
 
     private List<AntHomeListener> listeners = new ArrayList<>();
 
     public AntHome(World world) {
         this.world = world;
-        this.foodStorage = new FoodStorage(world, 100_000, 1_000);
+        this.simSettings = world.getSimSettings();
+        this.stepsTillNextBirth = simSettings.home_birthPeriod;
+        this.foodStorage = new FoodStorage(
+                world, 
+                simSettings.home_foodstore_capacity, 
+                simSettings.home_foodstore_initial);
         this.id = nextId++;
     }
 
@@ -93,7 +96,7 @@ public class AntHome extends MatrixMappableEntity implements DynamicEntity {
 
     private boolean enoughFoodForBirth() {
         int numAnts = ants.size();
-        return foodStorage.getCurrent() > BIRTH_FOOD_THRESHOLD * numAnts;
+        return foodStorage.getCurrent() > simSettings.home_birthFoodThreshold * numAnts;
     }
 
     public World getWorld() {
@@ -129,12 +132,12 @@ public class AntHome extends MatrixMappableEntity implements DynamicEntity {
         stepsTillNextBirth--;
         if (stepsTillNextBirth < 0 && enoughFoodForBirth()) {
             births++;
-            if (births % 10 == 0) {
+            if (births % simSettings.home_queenBirthPeriod == 0) {
                 world.createQueenAnt(this);
             } else {
                 world.createAnt(this);
             }
-            stepsTillNextBirth = BIRTH_PERIOD;
+            stepsTillNextBirth = simSettings.home_birthPeriod;
         }
 
     }
