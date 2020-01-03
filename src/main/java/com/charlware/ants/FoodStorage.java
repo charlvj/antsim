@@ -119,6 +119,9 @@ public class FoodStorage extends MatrixMappableEntity implements DynamicEntity {
                 stepsSinceRestock = 0;
             }
         }
+        else if (isEmpty() && removeWhenEmpty) {
+            world.removeFoodStorage(this);
+        }
     }
 
     @Override

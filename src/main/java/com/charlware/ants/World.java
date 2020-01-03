@@ -19,6 +19,10 @@ import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import org.apache.commons.configuration2.BaseConfiguration;
+import org.apache.commons.configuration2.Configuration;
+import org.apache.commons.configuration2.builder.fluent.Configurations;
+import org.apache.commons.configuration2.ex.ConfigurationException;
 
 /**
  *
@@ -38,6 +42,10 @@ public final class World {
 	private final ArrayDeque<Runnable> actionQueue = new ArrayDeque<>();
 	
 	private final List<WorldListener> listeners = new ArrayList<>();
+        
+        private Configuration worldConfig;
+        
+        private int failedAntHomes = 0;
 	
 	public World(int size) {
 		this.size = size;
@@ -47,6 +55,18 @@ public final class World {
 		
 		
 	}
+        
+        public void setConfigFile(String filename) throws ConfigurationException {
+            Configurations configs = new Configurations();
+            worldConfig = configs.properties(filename);
+        }
+        
+        public Configuration getWorldConfig() {
+            if(worldConfig == null) {
+                worldConfig = new BaseConfiguration();
+            }
+            return worldConfig;
+        }
 	
 	public int getSize() {
 		return size;
@@ -141,9 +161,26 @@ public final class World {
 				fs.add(t);
 				System.out.println("Added to existing food source: " + fs);
 			}
+                        
+                        // Check if this was the last ant of its antHome
+                        antHome = ant.getAntHome();
+                        if(antHome.isDead()) {
+                            System.out.println("Ant Home died: " + antHome);
+                            fs = antHome.getFoodStorage();
+                            fs.setLocation(antHome.getLocation());
+                            fs.setRemoveWhenEmpty(true);
+                            fs.setRestock(0, 0);
+                            removeAntHome(antHome);
+                            addFoodSource(fs);
+                            failedAntHomes++;
+                        }
 		});
 	}
 	
+        public void addFoodSource(FoodStorage fs) {
+            actionQueue.add(() -> foodSources.add(fs));
+        }
+        
 	public void addStableFoodSource() {
 		actionQueue.add(() -> {
 			int x = random.nextInt(size);

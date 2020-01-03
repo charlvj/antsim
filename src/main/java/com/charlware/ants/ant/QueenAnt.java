@@ -35,6 +35,10 @@ public class QueenAnt extends Ant {
 		super(id, antHome, 300, new StateMachine<>(AntState.PreparingForDeparture, smconfig));
 		homeDirection = MapDirection.randomActualDirection();
 	}
+        
+        public AntState getState() {
+            return state.getState();
+        }
 
 	@Override
 	public void step() {
