@@ -10,9 +10,9 @@ This is a hobby project in all forms of the word, with all sorts of incomplete i
 
 # Building
 If you have maven installed, you can just do
-  mvn build
+``` mvn build ```
 to build the project, and
-  mvn exec:java
+``` mvn exec:java ```
 to run it.
 
 You can also open the project straight in NetBeans if you have it.
