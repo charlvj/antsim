@@ -71,10 +71,7 @@ public class AntHome extends MatrixMappableEntity implements DynamicEntity {
     public boolean removeAnt(Ant ant) {
         boolean result = ants.remove(ant);
         fireAntDied(ant);
-
-        if (ants.isEmpty()) {
-            world.removeAntHome(this);
-        }
+        // the World will remove the anthome if it is dead
         return result;
     }
 
