@@ -13,26 +13,22 @@ import java.time.Instant;
  * @author charlvj
  */
 public class Event {
-    final Instant time;
+    final int step;
     final AntHome antHome;
     final EventType eventType;
     
-    public Event(AntHome antHome, EventType eventType) {
-        this(Instant.now(), antHome, eventType);
-    }
-    
-    public Event(Instant time, AntHome antHome, EventType eventType) {
-        this.time = time;
+    public Event(int step, AntHome antHome, EventType eventType) {
+        this.step = step;
         this.antHome = antHome;
         this.eventType = eventType;
     }
     
     public String toString() {
-        return "[" + time + "]  - " + antHome.getId() + " - " + eventType;
+        return "[" + step + "]  - " + antHome.getId() + " - " + eventType;
     }
 
-    public Instant getTime() {
-        return time;
+    public int getStep() {
+        return step;
     }
 
     public AntHome getAntHome() {

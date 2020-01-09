@@ -22,7 +22,7 @@ public class EventLogModel extends AbstractTableModel
 
     public EventLogModel(EventLog eventLog) {
         this.eventLog = eventLog;
-        eventLog.setListener(this);
+        eventLog.addListener(this);
     }
 
     @Override
@@ -45,7 +45,7 @@ public class EventLogModel extends AbstractTableModel
         Event event = eventLog.getEvent(rowIndex);
         switch (columnIndex) {
             case 0:
-                return event.getTime();
+                return event.getStep();
             case 1:
                 return event.getAntHome().getId();
             case 2:

@@ -48,7 +48,7 @@ public final class World {
         private Configuration worldConfig;
         private SimSettings simSettings = new SimSettings();
         
-        private final EventLog eventLog = new EventLog();
+        private final EventLog eventLog;
         
         private int failedAntHomes = 0;
 	
@@ -57,7 +57,7 @@ public final class World {
 		
 		// Create initial anthome
 		createAntHome(size/2, size/2);
-		
+		eventLog = new EventLog(this);
 		
 	}
         

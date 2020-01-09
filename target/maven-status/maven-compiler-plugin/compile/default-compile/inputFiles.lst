@@ -7,12 +7,14 @@
 /home/charlvj/Projects/ants/src/main/java/com/charlware/ants/ant/AntState.java
 /home/charlvj/Projects/ants/src/main/java/com/charlware/ants/sim/CubeLocation.java
 /home/charlvj/Projects/ants/src/main/java/com/charlware/ants/logs/EventType.java
+/home/charlvj/Projects/ants/src/main/java/com/charlware/ants/ui/MetricsChart.java
 /home/charlvj/Projects/ants/src/main/java/com/charlware/ants/AntHomeEntrance.java
 /home/charlvj/Projects/ants/src/main/java/com/charlware/ants/WorldSettings.java
 /home/charlvj/Projects/ants/src/main/java/com/charlware/ants/logs/Event.java
 /home/charlvj/Projects/ants/src/main/java/com/charlware/ants/SimSettings.java
 /home/charlvj/Projects/ants/src/main/java/com/charlware/ants/ui/EventLogFrame.java
 /home/charlvj/Projects/ants/src/main/java/com/charlware/ants/ui/SimulationStepListener.java
+/home/charlvj/Projects/ants/src/main/java/com/charlware/ants/logs/Metric.java
 /home/charlvj/Projects/ants/src/main/java/com/charlware/ants/ant/WorkerAnt.java
 /home/charlvj/Projects/ants/src/main/java/com/charlware/ants/AntHome.java
 /home/charlvj/Projects/ants/src/main/java/com/charlware/ants/sim/SimUtils.java
@@ -24,6 +26,7 @@
 /home/charlvj/Projects/ants/src/main/java/com/charlware/ants/WorldListener.java
 /home/charlvj/Projects/ants/src/main/java/com/charlware/ants/sim/Location.java
 /home/charlvj/Projects/ants/src/main/java/com/charlware/ants/sim/DynamicEntity.java
+/home/charlvj/Projects/ants/src/main/java/com/charlware/ants/ui/StatsChartDataset.java
 /home/charlvj/Projects/ants/src/main/java/com/charlware/ants/Marker.java
 /home/charlvj/Projects/ants/src/main/java/com/charlware/ants/ant/QueenAnt.java
 /home/charlvj/Projects/ants/src/main/java/com/charlware/ants/sim/MappableEntity.java
@@ -34,6 +37,7 @@
 /home/charlvj/Projects/ants/src/main/java/com/charlware/ants/ant/Ant.java
 /home/charlvj/Projects/ants/src/main/java/com/charlware/ants/FoodStorage.java
 /home/charlvj/Projects/ants/src/main/java/com/charlware/ants/sim/RandomFoodGenerator.java
+/home/charlvj/Projects/ants/src/main/java/com/charlware/ants/logs/MetricsLog.java
 /home/charlvj/Projects/ants/src/main/java/com/charlware/ants/ui/WorldPanel.java
 /home/charlvj/Projects/ants/src/main/java/com/charlware/ants/sim/DirectionFinder.java
 /home/charlvj/Projects/ants/src/main/java/com/charlware/ants/ant/AntAction.java

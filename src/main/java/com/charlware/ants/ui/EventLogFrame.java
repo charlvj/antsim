@@ -5,6 +5,12 @@
  */
 package com.charlware.ants.ui;
 
+import java.awt.BorderLayout;
+import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
+import org.knowm.xchart.XChartPanel;
+import org.knowm.xchart.XYChart;
+
 /**
  *
  * @author charlvj
@@ -12,7 +18,7 @@ package com.charlware.ants.ui;
 public class EventLogFrame extends javax.swing.JFrame {
 
     private EventLogModel eventLogModel = null;
-    
+
     /**
      * Creates new form EventLogFrame
      */
@@ -20,6 +26,26 @@ public class EventLogFrame extends javax.swing.JFrame {
         initComponents();
         eventLogModel = new EventLogModel(simAnt.getWorld().getEventLog());
         tblEvents.setModel(eventLogModel);
+//        stats = new StatsChartAccumulator(simAnt.getWorld());
+//        stats = new MetricsXYDataset(simAnt.getWorld());
+//        JFreeChart chart = ChartFactory.createStackedXYAreaChart("Metrics", "Steps", "Y-Axis", stats, PlotOrientation.VERTICAL, true, true, false);
+////        JFreeChart chart = createChart(stats);
+//        ChartPanel chartPanel = new ChartPanel(chart);
+//        pnlCharts.add(chartPanel, BorderLayout.NORTH);
+
+        MetricsChart metricsChart = new MetricsChart(simAnt.getWorld());
+        final JPanel chartPanel = new XChartPanel<XYChart>(metricsChart.createChart());
+        metricsChart.addChartListener(new MetricsChartListener() {
+            @Override
+            public void chartUpdated(XYChart chart) {
+                SwingUtilities.invokeLater(() -> {
+                   chartPanel.revalidate();
+                   chartPanel.repaint();
+                });
+            }
+        });
+        pnlCharts.add(chartPanel, BorderLayout.CENTER);
+        
     }
 
     /**
@@ -33,6 +59,7 @@ public class EventLogFrame extends javax.swing.JFrame {
 
         jScrollPane1 = new javax.swing.JScrollPane();
         tblEvents = new javax.swing.JTable();
+        pnlCharts = new javax.swing.JPanel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Event Log");
@@ -50,21 +77,24 @@ public class EventLogFrame extends javax.swing.JFrame {
         ));
         jScrollPane1.setViewportView(tblEvents);
 
+        pnlCharts.setLayout(new java.awt.BorderLayout());
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 376, Short.MAX_VALUE)
-                .addContainerGap())
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 425, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(pnlCharts, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 275, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(13, Short.MAX_VALUE))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addGap(0, 12, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+            .addComponent(pnlCharts, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
 
         pack();
@@ -73,6 +103,17 @@ public class EventLogFrame extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JPanel pnlCharts;
     private javax.swing.JTable tblEvents;
     // End of variables declaration//GEN-END:variables
 }
+
+//class LabelGenerator implements XYItemLabelGenerator {
+//
+//        @Override
+//        public String generateLabel(XYDataset dataset, int series, int item) {
+//            StatsChartAccumulator labelSource = (StatsChartAccumulator) dataset;
+//            return labelSource.getLabel(series, item);
+//        }
+//
+//    }
