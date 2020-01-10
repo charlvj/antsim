@@ -43,6 +43,7 @@ public class WorldPanel extends JPanel {
     public static int multiplier = 12;
 
     private Timer timer;
+    private int baseTimerSpeed = 100;
 
     private final World world;
 
@@ -63,11 +64,8 @@ public class WorldPanel extends JPanel {
 //		addMouseListener(this);
         setupMouseListener();
 
-        timer = new Timer(100, (e) -> {
-            world.step();
-            repaint();
-            fireStepEvent();
-        });
+        createTimer(1);
+        
 //		timer.start();
         revalidate();
         repaint();
@@ -80,7 +78,27 @@ public class WorldPanel extends JPanel {
     public void stop() {
         timer.stop();
     }
+    
+    public void setSpeedMultiplier(int multiplier) {
+        boolean timerStarted = timer == null ? false : timer.isRunning();
+        if(timer != null) {
+            stop();
+            timer = null;
+        }
+        createTimer(multiplier);
+        if(timerStarted) {
+            start();
+        }
+    }
 
+    private void createTimer(int multiplier) {
+        timer = new Timer(baseTimerSpeed / multiplier, (e) -> {
+            world.step();
+            repaint();
+            fireStepEvent();
+        });
+    }
+    
     public void setHighlightedAntHome(AntHome antHome) {
         this.highlightedAntHome = antHome;
     }
@@ -162,38 +180,30 @@ public class WorldPanel extends JPanel {
         g.setFont(small);
         int size = world.getSize();
 
-//		for(int r = 0; r < size; r++) {
-//			for(int c = 0; c < size; c++) {
-//				g.drawString(".", getScreenX(c), getScreenY(r));
-//			}
-//		}
+        // Foodstores
         for (FoodStorage fs : world.getFoodSources()) {
             g.setColor(fs.hasFood() ? DARK_GREEN : Color.RED);
             if(fs.isTemporary()) 
                 g.setFont(bold);
-            //g.drawString("F", getScreenX(fs.getX()), getScreenY(fs.getY()));
             drawEntity(g, "F", fs);
         }
 
+        // Markers
         for (Marker marker : world.getMarkers()) {
             g.setFont(small);
             g.setColor(marker.getStrength() > 50 ? Color.BLUE : Color.GRAY);
-//			g.drawString(".", getScreenX(marker.getX()), getScreenY(marker.getY()));
             drawEntity(g, ".", marker);
         }
 
-        //g.drawString("H", getScreenX(antHome.getX()), getScreenY(antHome.getY()));
+        // Ant Homes
         for (AntHome antHome : world.getAntHomes()) {
-            g.setFont(small);
-            drawAntHome(g, antHome);
-//			g.setColor(Color.BLACK);
-//			if(antHome.equals(highlightedAntHome)) {
-//				g.setFont(bold);
-//			}
-//			drawEntity(g, "H", antHome);
-//			g.setFont(small);
+            if(!antHome.isDead()) {
+                g.setFont(small);
+                drawAntHome(g, antHome);
+            }
         }
 
+        // Labels
         for (MappableEntity entity : tracked) {
             g.setFont(small);
             drawInfo(g, entity);

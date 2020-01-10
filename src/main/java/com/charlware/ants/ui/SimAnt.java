@@ -106,6 +106,8 @@ public class SimAnt extends javax.swing.JFrame implements SimulationStepListener
         spNumFoodSources = new javax.swing.JSpinner();
         btStart = new javax.swing.JButton();
         btAddTempFoodSource = new javax.swing.JButton();
+        spnSpeed = new javax.swing.JSpinner();
+        jLabel5 = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
         tbStats = new javax.swing.JTable();
 
@@ -181,19 +183,35 @@ public class SimAnt extends javax.swing.JFrame implements SimulationStepListener
             }
         });
 
+        spnSpeed.setModel(new javax.swing.SpinnerListModel(new String[] {"x1", "x2", "x4", "x8"}));
+        spnSpeed.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                spnSpeedStateChanged(evt);
+            }
+        });
+
+        jLabel5.setText("Speed:");
+
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel2Layout.createSequentialGroup()
-                .addContainerGap()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(jLabel4)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(spNumFoodSources, javax.swing.GroupLayout.PREFERRED_SIZE, 57, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(btAddTempFoodSource)
-                .addGap(18, 18, 18)
-                .addComponent(btStart, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(spNumFoodSources, javax.swing.GroupLayout.PREFERRED_SIZE, 66, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addGap(296, 296, 296)
+                        .addComponent(jLabel5)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(spnSpeed, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(btAddTempFoodSource, javax.swing.GroupLayout.PREFERRED_SIZE, 216, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(btStart, javax.swing.GroupLayout.PREFERRED_SIZE, 203, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
         jPanel2Layout.setVerticalGroup(
@@ -203,8 +221,12 @@ public class SimAnt extends javax.swing.JFrame implements SimulationStepListener
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel4)
                     .addComponent(spNumFoodSources, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(btAddTempFoodSource)
-                    .addComponent(btStart))
+                    .addComponent(btStart)
+                    .addComponent(btAddTempFoodSource))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(spnSpeed, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel5))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -281,6 +303,18 @@ public class SimAnt extends javax.swing.JFrame implements SimulationStepListener
 		spNumFoodSources.setValue(world.getFoodSources().size());
     }//GEN-LAST:event_btAddTempFoodSourceActionPerformed
 
+    private void spnSpeedStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_spnSpeedStateChanged
+        int multiplier;
+        switch(spnSpeed.getValue().toString()) {
+            case "x1": multiplier = 1; break;
+            case "x2": multiplier = 2; break;
+            case "x4": multiplier = 4; break;
+            case "x8": multiplier = 8; break;
+            default: multiplier = 1;
+        }
+        pnlWorld.setSpeedMultiplier(multiplier);
+    }//GEN-LAST:event_spnSpeedStateChanged
+
 	/**
 	 * @param args the command line arguments
 	 */
@@ -323,11 +357,13 @@ public class SimAnt extends javax.swing.JFrame implements SimulationStepListener
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
+    private javax.swing.JLabel jLabel5;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane pnBoardScrollPane;
     private javax.swing.JSpinner spNumFoodSources;
+    private javax.swing.JSpinner spnSpeed;
     private javax.swing.JTable tbStats;
     private javax.swing.JTextField txAntHomes;
     private javax.swing.JTextField txAnts;
