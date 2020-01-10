@@ -5,6 +5,8 @@
  */
 package com.charlware.ants.ui;
 
+import com.charlware.ants.ui.charts.ChartListener;
+import com.charlware.ants.ui.charts.MetricsChart;
 import java.awt.BorderLayout;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
@@ -26,16 +28,11 @@ public class EventLogFrame extends javax.swing.JFrame {
         initComponents();
         eventLogModel = new EventLogModel(simAnt.getWorld().getEventLog());
         tblEvents.setModel(eventLogModel);
-//        stats = new StatsChartAccumulator(simAnt.getWorld());
-//        stats = new MetricsXYDataset(simAnt.getWorld());
-//        JFreeChart chart = ChartFactory.createStackedXYAreaChart("Metrics", "Steps", "Y-Axis", stats, PlotOrientation.VERTICAL, true, true, false);
-////        JFreeChart chart = createChart(stats);
-//        ChartPanel chartPanel = new ChartPanel(chart);
-//        pnlCharts.add(chartPanel, BorderLayout.NORTH);
 
         MetricsChart metricsChart = new MetricsChart(simAnt.getWorld());
+        metricsChart.setTitle("Overall Population");
         final JPanel chartPanel = new XChartPanel<XYChart>(metricsChart.createChart());
-        metricsChart.addChartListener(new MetricsChartListener() {
+        metricsChart.addChartListener(new ChartListener() {
             @Override
             public void chartUpdated(XYChart chart) {
                 SwingUtilities.invokeLater(() -> {
@@ -45,7 +42,7 @@ public class EventLogFrame extends javax.swing.JFrame {
             }
         });
         pnlCharts.add(chartPanel, BorderLayout.CENTER);
-        
+        pack();
     }
 
     /**

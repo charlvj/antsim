@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.charlware.ants.ui;
+package com.charlware.ants.ui.charts;
 
 import com.charlware.ants.World;
 import com.charlware.ants.logs.Event;
@@ -20,20 +20,13 @@ import org.knowm.xchart.style.Styler.LegendPosition;
  *
  * @author charlvj
  */
-public class MetricsChart implements EventLogListener {
-    private final EventLog eventLog;
-    
-    private List<Integer> steps = new ArrayList<>();
-    private List<Integer> antHomes = new ArrayList<>();
-    private List<Integer> ants = new ArrayList<>();
-    
-    private XYChart chart;
-    
-    private List<MetricsChartListener> listeners = new ArrayList<>();
+public class MetricsChart extends AntSimChart {
+    private final List<Integer> steps = new ArrayList<>();
+    private final List<Integer> antHomes = new ArrayList<>();
+    private final List<Integer> ants = new ArrayList<>();
     
     public MetricsChart(World world) {
-        this.eventLog = world.getEventLog();
-        this.eventLog.addListener(this);
+        super(world);
     }
     
     @Override
@@ -77,13 +70,8 @@ public class MetricsChart implements EventLogListener {
         ants.add(antsValue);
     }
     
-    public XYChart createChart() {
-        chart = new XYChartBuilder().width(600).height(400).title("Area Chart").xAxisTitle("Steps").yAxisTitle("Count").build();
-
-        // Customize Chart
-        chart.getStyler().setLegendPosition(LegendPosition.InsideNE);
-        chart.getStyler().setDefaultSeriesRenderStyle(XYSeriesRenderStyle.Area);
-
+    @Override
+    public void setupSeries() {
         // Give it starting values
         steps.add(0);
         antHomes.add(0);
@@ -92,21 +80,13 @@ public class MetricsChart implements EventLogListener {
         // Series
         chart.addSeries("AntHomes", steps, antHomes);
         chart.addSeries("Ants", steps, ants);
-        
-        return chart;
     }
     
     private void updateChart() {
         chart.updateXYSeries("AntHomes", steps, antHomes, null);
         chart.updateXYSeries("Ants", steps, ants, null);
-        listeners.forEach(listener -> listener.chartUpdated(chart));
+        fireChartListener();
     }
     
-    public void addChartListener(MetricsChartListener listener) {
-        listeners.add(listener);
-    }
-}
-
-interface MetricsChartListener  {
-    public void chartUpdated(XYChart chart);
+    
 }
