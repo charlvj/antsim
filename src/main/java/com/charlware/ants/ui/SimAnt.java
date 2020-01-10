@@ -183,7 +183,7 @@ public class SimAnt extends javax.swing.JFrame implements SimulationStepListener
             }
         });
 
-        spnSpeed.setModel(new javax.swing.SpinnerListModel(new String[] {"x1", "x2", "x4", "x8"}));
+        spnSpeed.setModel(new javax.swing.SpinnerListModel(new String[] {"x1", "x2", "x4", "x8", "x16"}));
         spnSpeed.addChangeListener(new javax.swing.event.ChangeListener() {
             public void stateChanged(javax.swing.event.ChangeEvent evt) {
                 spnSpeedStateChanged(evt);
@@ -310,6 +310,7 @@ public class SimAnt extends javax.swing.JFrame implements SimulationStepListener
             case "x2": multiplier = 2; break;
             case "x4": multiplier = 4; break;
             case "x8": multiplier = 8; break;
+            case "x16": multiplier = 16; break;
             default: multiplier = 1;
         }
         pnlWorld.setSpeedMultiplier(multiplier);

@@ -221,6 +221,7 @@
                 <ListItem value="x2"/>
                 <ListItem value="x4"/>
                 <ListItem value="x8"/>
+                <ListItem value="x16"/>
               </SpinnerModel>
             </Property>
           </Properties>
