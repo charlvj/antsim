@@ -5,9 +5,11 @@
  */
 package com.charlware.ants.ui;
 
+import com.charlware.ants.ui.charts.AntHomesChart;
 import com.charlware.ants.ui.charts.ChartListener;
 import com.charlware.ants.ui.charts.MetricsChart;
-import java.awt.BorderLayout;
+import java.util.HashMap;
+import java.util.Map;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import org.knowm.xchart.XChartPanel;
@@ -17,10 +19,12 @@ import org.knowm.xchart.XYChart;
  *
  * @author charlvj
  */
-public class EventLogFrame extends javax.swing.JFrame {
+public class EventLogFrame extends javax.swing.JFrame implements ChartListener {
 
     private EventLogModel eventLogModel = null;
 
+    private Map<XYChart, JPanel> charts = new HashMap<>();
+    
     /**
      * Creates new form EventLogFrame
      */
@@ -29,19 +33,27 @@ public class EventLogFrame extends javax.swing.JFrame {
         eventLogModel = new EventLogModel(simAnt.getWorld().getEventLog());
         tblEvents.setModel(eventLogModel);
 
+        XYChart chart;
+        JPanel chartPanel;
+        
         MetricsChart metricsChart = new MetricsChart(simAnt.getWorld());
         metricsChart.setTitle("Overall Population");
-        final JPanel chartPanel = new XChartPanel<XYChart>(metricsChart.createChart());
-        metricsChart.addChartListener(new ChartListener() {
-            @Override
-            public void chartUpdated(XYChart chart) {
-                SwingUtilities.invokeLater(() -> {
-                   chartPanel.revalidate();
-                   chartPanel.repaint();
-                });
-            }
-        });
-        pnlCharts.add(chartPanel, BorderLayout.CENTER);
+        metricsChart.addChartListener(this);
+        
+        chart = metricsChart.createChart();
+        chartPanel = new XChartPanel<XYChart>(chart);
+        pnlCharts.add(chartPanel);
+        charts.put(chart, chartPanel);
+        
+        AntHomesChart antHomesChart = new AntHomesChart(simAnt.getWorld());
+        antHomesChart.setTitle("AntHome Populations");
+        antHomesChart.addChartListener(this);
+        
+        chart = antHomesChart.createChart();
+        chartPanel = new XChartPanel<XYChart>(chart);
+        pnlCharts.add(chartPanel);
+        charts.put(chart, chartPanel);
+        
         pack();
     }
 
@@ -74,7 +86,7 @@ public class EventLogFrame extends javax.swing.JFrame {
         ));
         jScrollPane1.setViewportView(tblEvents);
 
-        pnlCharts.setLayout(new java.awt.BorderLayout());
+        pnlCharts.setLayout(new java.awt.GridLayout(0, 1));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -103,6 +115,15 @@ public class EventLogFrame extends javax.swing.JFrame {
     private javax.swing.JPanel pnlCharts;
     private javax.swing.JTable tblEvents;
     // End of variables declaration//GEN-END:variables
+
+    @Override
+    public void chartUpdated(XYChart chart) {
+        SwingUtilities.invokeLater(() -> {
+            JPanel p = charts.get(chart);
+            p.revalidate();
+            p.repaint();
+         });
+    }
 }
 
 //class LabelGenerator implements XYItemLabelGenerator {

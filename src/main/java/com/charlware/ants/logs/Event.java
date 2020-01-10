@@ -39,5 +39,15 @@ public class Event {
         return eventType;
     }
     
-    
+    public int getValue() {
+        switch(eventType) {
+            case ANTHOME_FOUNDED:
+            case ANT_BORN:
+                return 1;
+            case ANTHOME_ENDED:
+            case ANT_DIED:
+                return -1;
+        }
+        return 0;
+    }
 }
