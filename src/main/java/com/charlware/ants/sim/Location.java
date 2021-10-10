@@ -5,6 +5,8 @@
  */
 package com.charlware.ants.sim;
 
+import com.charlware.ants.MapDirection;
+
 /**
  *
  * @author CVanJaarsveldt
@@ -17,5 +19,11 @@ public interface Location {
 		}
 	}
 	
+        public MapDirection[] getDirections();
+        public Location[] getNeighbors();
 	public double getDistanceTo(Location other);
+        
+        public default MapDirection getDirectionTo(Location other) {
+            return DirectionFinder.getDirection(this, other);
+        }
 }

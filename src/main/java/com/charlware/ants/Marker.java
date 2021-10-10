@@ -7,13 +7,13 @@ package com.charlware.ants;
 
 import com.charlware.ants.sim.DynamicEntity;
 import com.charlware.ants.sim.Location;
-import com.charlware.ants.sim.MatrixMappableEntity;
+import com.charlware.ants.sim.MappableEntity;
 
 /**
  *
  * @author CVanJaarsveldt
  */
-public class Marker extends MatrixMappableEntity implements DynamicEntity {
+public class Marker extends MappableEntity implements DynamicEntity {
 	private static int INITIAL_STRENGTH = 200;
 
 	private final MapDirection direction;
@@ -43,6 +43,6 @@ public class Marker extends MatrixMappableEntity implements DynamicEntity {
 	}
 	
 	public String toString() {
-		return "Marker + " + direction + " @ (" + getX() + ";" + getY() + "), strength: " + strength;
+		return "Marker + " + direction + " @ (" + getLocation() + "), strength: " + strength;
 	}
 }

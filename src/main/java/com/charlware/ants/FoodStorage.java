@@ -7,13 +7,13 @@ package com.charlware.ants;
 
 import com.charlware.ants.sim.DynamicEntity;
 import com.charlware.ants.sim.Location;
-import com.charlware.ants.sim.MatrixMappableEntity;
+import com.charlware.ants.sim.MappableEntity;
 
 /**
  *
  * @author CVanJaarsveldt
  */
-public class FoodStorage extends MatrixMappableEntity implements DynamicEntity {
+public class FoodStorage extends MappableEntity implements DynamicEntity {
 
     private final World world;
     private final int max;
@@ -31,11 +31,6 @@ public class FoodStorage extends MatrixMappableEntity implements DynamicEntity {
         this.world = world;
         this.max = max;
         this.current = current;
-    }
-
-    public FoodStorage(World world, int max, int current, int x, int y) {
-        this(world, max, current);
-        setLocation(x, y);
     }
 
     public FoodStorage(World world, int max, int current, Location loc) {

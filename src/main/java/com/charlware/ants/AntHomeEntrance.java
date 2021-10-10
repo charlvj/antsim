@@ -5,13 +5,13 @@
  */
 package com.charlware.ants;
 
-import com.charlware.ants.sim.MatrixMappableEntity;
+import com.charlware.ants.sim.MappableEntity;
 
 /**
  *
  * @author CVanJaarsveldt
  */
-public class AntHomeEntrance extends MatrixMappableEntity {
+public class AntHomeEntrance extends MappableEntity {
 	private final World world;
 	private final AntHome antHome;
 	

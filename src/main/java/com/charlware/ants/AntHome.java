@@ -9,8 +9,7 @@ import com.charlware.ants.ant.Ant;
 import com.charlware.ants.ant.AntState;
 import com.charlware.ants.sim.DynamicEntity;
 import com.charlware.ants.sim.Location;
-import com.charlware.ants.sim.MatrixLocation;
-import com.charlware.ants.sim.MatrixMappableEntity;
+import com.charlware.ants.sim.MappableEntity;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
@@ -19,7 +18,7 @@ import java.util.stream.Stream;
  *
  * @author CVanJaarsveldt
  */
-public class AntHome extends MatrixMappableEntity implements DynamicEntity {
+public class AntHome extends MappableEntity implements DynamicEntity {
 
     private static int nextId = 1;
     private final int id;
@@ -53,10 +52,6 @@ public class AntHome extends MatrixMappableEntity implements DynamicEntity {
         entrance.setLocation(location);
         entrances.add(entrance);
         return this;
-    }
-
-    public AntHome addEntrance(int x, int y) {
-        return addEntrance(new MatrixLocation(x, y));
     }
 
     public List<AntHomeEntrance> getEntrances() {

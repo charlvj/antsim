@@ -12,7 +12,7 @@ import com.charlware.ants.HitAWallException;
 import com.charlware.ants.MapDirection;
 import com.charlware.ants.Marker;
 import com.charlware.ants.sim.DirectionFinder;
-import com.charlware.ants.sim.MatrixLocation;
+import com.charlware.ants.sim.Location;
 import com.github.oxo42.stateless4j.StateMachine;
 import com.github.oxo42.stateless4j.StateMachineConfig;
 import java.util.Random;
@@ -83,9 +83,9 @@ public class WorkerAnt extends Ant {
                 new StateMachine<>(AntState.Wandering, smconfig));
     }
 
-    public WorkerAnt(AntHome home, int id, int x, int y) {
+    public WorkerAnt(AntHome home, int id, Location location) {
         this(home, id);
-        setLocation(x, y);
+        setLocation(location);
     }
 
     public AntState getState() {
@@ -188,12 +188,11 @@ public class WorkerAnt extends Ant {
     }
 
     private void wander() {
-        int directionInt = random.nextInt(4);
-        MapDirection direction = MapDirection.values()[directionInt];
+        MapDirection direction = world.mapDirections.randomActualDirection();
         print("Trying to move " + direction + "... ");
         try {
             move(direction);
-            println("Moved to " + getX() + "; " + getY());
+            println("Moved to " + getLocation());
         } catch (HitAWallException ex) {
             // Just sit here and wonder what to do for now...
             println("Staying put: I hit a wall.");
@@ -229,59 +228,17 @@ public class WorkerAnt extends Ant {
     }
 
     public void goHome(boolean leaveMarkers) {
-        MatrixLocation antHomeLocation = (MatrixLocation) world.getClosestAntHomeEntrance(this);
+        Location antHomeLocation = world.getClosestAntHomeEntrance(this);
 //		MapDirection direction = ((MatrixLocation) getLocation()).getDirectionTo(antHomeLocation);
-        MapDirection direction = DirectionFinder.getDirection(getLocation(), antHomeLocation);
-//		MapDirection direction = MapDirection.Nowhere;
-//		
-//		int dx = antHomeLocation.getX() - getX();
-//		int dy = antHomeLocation.getY() - getY();
-//		
-//		int newX = getX();
-//		int newY = getY();
-//		
-//		if(dx == 0 && dy == 0) {
-//			// We're there!
-//		}
-//		else if(dx == 0 && dy > 0) {
-//			// Move down
-//			direction = MapDirection.Down;
-//		}
-//		else if(dx == 0 && dy < 0) {
-//			// Move up
-//			direction = MapDirection.Up;
-//		}
-//		else if(dx > 0 && dy == 0) {
-//			// Move right
-//			direction = MapDirection.Right;
-//		}
-//		else if(dx < 0 && dy == 0) {
-//			// Move left
-//			direction = MapDirection.Left;
-//		}
-//		else if(dx < 0 && dy < 0) {
-//			if(dx < dy) direction = MapDirection.Left;
-//			else direction = MapDirection.Up;
-//		}
-//		else if(dx < 0 && dy > 0) {
-//			if(Math.abs(dx) > dy) direction = MapDirection.Left;
-//			else direction = MapDirection.Down;
-//		}
-//		else if(dx > 0 && dy < 0) {
-//			if(dx > Math.abs(dy)) direction = MapDirection.Right;
-//			else direction = MapDirection.Up;
-//		}
-//		else if(dx > 0 && dy > 0) {
-//			if(dx > dy) direction = MapDirection.Right;
-//			else direction = MapDirection.Down;
-//		}
+        MapDirection direction = getLocation().getDirectionTo(antHomeLocation);
 
         print("Trying to move " + direction + "... ");
         try {
+            Location oldLocation = getLocation();
             move(direction);
-            print("\tMoved to " + getX() + "; " + getY());
+            print("\tMoved to " + getLocation());
             if (leaveMarkers && !amIHome()) {
-                Marker marker = new Marker(direction.opposite(), getLocation());
+                Marker marker = new Marker(getLocation().getDirectionTo(oldLocation), getLocation());
                 world.placeMarker(marker);
                 print(".\tPlaced Marker (" + marker + "). ");
             }
@@ -301,7 +258,7 @@ public class WorkerAnt extends Ant {
         print("Following Marker " + marker.getDirection() + "... ");
         try {
             move(marker.getDirection());
-            println("Moved to " + getX() + "; " + getY());
+            println("Moved to " + getLocation());
         } catch (HitAWallException ex) {
             // Just sit here and wonder what to do for now...
             println("Staying put: I hit a wall. Return to wandering.");

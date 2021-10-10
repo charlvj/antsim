@@ -9,7 +9,14 @@ package com.charlware.ants.sim;
  *
  * @author CVanJaarsveldt
  */
-public interface MappableEntity {
-	public Location getLocation();
-	public void setLocation(Location location);
+public class MappableEntity {
+    protected Location location = null;
+    
+    public Location getLocation() {
+        return location;
+    }
+
+    public void setLocation(Location location) {
+        this.location = location;
+    }
 }

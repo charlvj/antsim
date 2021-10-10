@@ -12,14 +12,15 @@ import com.charlware.ants.MapDirection;
 import com.charlware.ants.SimSettings;
 import com.charlware.ants.World;
 import com.charlware.ants.sim.DynamicEntity;
-import com.charlware.ants.sim.MatrixMappableEntity;
+import com.charlware.ants.sim.Location;
+import com.charlware.ants.sim.MappableEntity;
 import com.github.oxo42.stateless4j.StateMachine;
 
 /**
  *
  * @author CVanJaarsveldt
  */
-public abstract class Ant extends MatrixMappableEntity implements DynamicEntity {
+public abstract class Ant extends MappableEntity implements DynamicEntity {
     protected final int id;
     protected final FoodStorage storage;
     protected final AntHome home;
@@ -61,23 +62,8 @@ public abstract class Ant extends MatrixMappableEntity implements DynamicEntity 
     }
 
     protected void move(MapDirection direction) throws HitAWallException {
-        int x = getX();
-        int y = getY();
-        switch (direction) {
-            case Up:
-                y--;
-                break;
-            case Left:
-                x--;
-                break;
-            case Right:
-                x++;
-                break;
-            case Down:
-                y++;
-                break;
-        }
-        world.setMyLocation(this, x, y);
+        Location newLocation = direction.applyTo(location);
+        world.setMyLocation(this, newLocation);
     }
 
     protected void eat() {

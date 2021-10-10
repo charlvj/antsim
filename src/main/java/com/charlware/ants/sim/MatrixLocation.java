@@ -6,6 +6,7 @@
 package com.charlware.ants.sim;
 
 import com.charlware.ants.MapDirection;
+import com.charlware.ants.MapDirections;
 import java.util.Random;
 
 /**
@@ -51,7 +52,7 @@ public class MatrixLocation implements Location {
         }
 
         MatrixLocation other = (MatrixLocation) otherLocation;
-        return Math.sqrt(sqr(other.x - x) + sqr(other.y + y));
+        return Math.sqrt(sqr(other.x - x) + sqr(other.y - y));
     }
 
     public MapDirection getDirectionTo(Location otherLocation) {
@@ -132,6 +133,28 @@ public class MatrixLocation implements Location {
         }
         final MatrixLocation other = (MatrixLocation) obj;
         return x == other.x && y == other.y;
+    }
+
+    @Override
+    public Location[] getNeighbors() {
+        MapDirection[] directions = MapDirections.MATRIX_DIRECTIONS;
+        Location[] neighbors = new MatrixLocation[directions.length];
+        
+        for(int i = 0; i < directions.length; i++) {
+            neighbors[i] = directions[i].applyTo(this);
+        }
+        
+        return neighbors;
+    }
+
+    @Override
+    public MapDirection[] getDirections() {
+        return MapDirections.MATRIX_DIRECTIONS;
+    }
+    
+    @Override
+    public String toString() {
+        return "[" + x + "; " + y + "]";
     }
 
 }

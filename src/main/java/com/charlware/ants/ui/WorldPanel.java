@@ -11,6 +11,8 @@ import com.charlware.ants.Marker;
 import com.charlware.ants.World;
 import com.charlware.ants.ant.Ant;
 import com.charlware.ants.ant.QueenAnt;
+import com.charlware.ants.sim.CubeLocation;
+import com.charlware.ants.sim.Location;
 import com.charlware.ants.sim.MappableEntity;
 import com.charlware.ants.sim.MatrixLocation;
 import java.awt.BorderLayout;
@@ -19,7 +21,6 @@ import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.Font;
-import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
@@ -40,7 +41,7 @@ import javax.swing.Timer;
  */
 public class WorldPanel extends JPanel {
 
-    public static int multiplier = 12;
+    public static int multiplier = 8;
 
     private Timer timer;
     private int baseTimerSpeed = 100;
@@ -58,6 +59,9 @@ public class WorldPanel extends JPanel {
     
     private Color DARK_GREEN = Color.GREEN.darker();
 
+    private Point topLeft = new Point(0, 0);
+    private Point bottomRight = new Point(0, 0);
+    
     public WorldPanel(World world) {
         this.world = world;
 
@@ -121,9 +125,14 @@ public class WorldPanel extends JPanel {
 
     @Override
     public Dimension getPreferredSize() {
-        int width = world.getSize() * multiplier;
-        Dimension dim = new Dimension(width, width);
-        System.out.println("Dimension: " + dim);
+//        int width = world.getSize() * multiplier;
+//        Dimension dim = new Dimension(width, width);
+//        System.out.println("Dimension: " + dim);
+        Dimension dim = new Dimension(
+            bottomRight.x - topLeft.x,
+            bottomRight.y - topLeft.y
+        );
+
         return dim;
     }
 
@@ -139,17 +148,78 @@ public class WorldPanel extends JPanel {
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
-        drawWorld((Graphics2D) g);
+        Graphics2D g2 = (Graphics2D) g;
+        drawWorld(g2);
+        g2.translate(-topLeft.x, -topLeft.y);
     }
-
+    
+    private void updateViewingArea(int x, int y) {
+        boolean changed = false;
+        if(x < topLeft.x) {
+            topLeft.x = x;
+            changed = true;
+        }
+        if(x > bottomRight.x) {
+            bottomRight.x = x;
+            changed = true;
+        }
+        if(y < topLeft.y) {
+            topLeft.y = y;
+            changed = true;
+        }
+        if(y > bottomRight.y)  {
+            bottomRight.y = y;
+            changed = true;
+        }
+        
+        if(changed)
+            revalidate();
+    }
+    
+    private Point getDrawLocation(Location location) {
+        int x, y;
+        MatrixLocation mloc;
+        if(location instanceof MatrixLocation) {
+            mloc = (MatrixLocation) location;
+        }
+        else if(location instanceof CubeLocation) {
+            CubeLocation cloc = (CubeLocation) location;
+            mloc = cloc.toMatrixLocation();
+        }
+        else {
+            throw new RuntimeException("Invalid location system");
+        }
+        x = mloc.getX();
+        y = mloc.getY();
+        
+        double sqrt3 = Math.sqrt(3);
+        if(location instanceof CubeLocation) {
+            x = (int) Math.round(sqrt3 * x + sqrt3 / 2 * y);
+            y = (int) Math.round(3.0 / 2 * y);
+        }
+        
+        x = getScreenX(x);
+        y = getScreenY(y);
+        
+        updateViewingArea(x, y);
+        
+//        x = x - topLeft.x;
+//        y = y - topLeft.y;
+        
+        System.out.println("drawLocation: " + mloc + " -->  " + x + "; " + y + ";     " + topLeft);
+        
+        return new Point(x, y);
+    }
+    
     private void drawEntity(Graphics2D g, String id, MappableEntity entity) {
-        MatrixLocation loc = (MatrixLocation) entity.getLocation();
-        g.drawString(id, getScreenX(loc.getX()), getScreenY(loc.getY()));
+        Point point = getDrawLocation(entity.getLocation());
+        
+        g.drawString(id, point.x, point.y);
     }
 
     private void drawInfo(Graphics2D g, MappableEntity entity) {
-        MatrixLocation loc = (MatrixLocation) entity.getLocation();
-        g.drawString(entity.toString(), getScreenX(loc.getX()), getScreenY(loc.getY() + 1));
+        Point point = getDrawLocation(entity.getLocation());
+        g.drawString(entity.toString(), point.x, point.y + 1);
     }
 
     private void drawAntHome(Graphics2D g, AntHome antHome) {
@@ -177,8 +247,8 @@ public class WorldPanel extends JPanel {
     }
 
     public void drawWorld(Graphics2D g) {
+        
         g.setFont(small);
-        int size = world.getSize();
 
         // Foodstores
         for (FoodStorage fs : world.getFoodSources()) {

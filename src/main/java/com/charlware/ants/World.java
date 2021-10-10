@@ -10,13 +10,14 @@ import com.charlware.ants.ant.QueenAnt;
 import com.charlware.ants.ant.WorkerAnt;
 import com.charlware.ants.logs.EventLog;
 import com.charlware.ants.logs.EventType;
+import com.charlware.ants.sim.CubeLocationSystem;
 import com.charlware.ants.sim.Location;
+import com.charlware.ants.sim.LocationSystem;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import com.charlware.ants.sim.MappableEntity;
 import com.charlware.ants.sim.MatrixLocation;
-import com.charlware.ants.sim.MatrixMappableEntity;
 import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.HashMap;
@@ -33,13 +34,17 @@ import org.apache.commons.configuration2.ex.ConfigurationException;
 public final class World {
 	private final int size;
 	public static final Random random = new Random();
+        
+        // This sets the stage for the entire coordinate system of the world.
+        public final LocationSystem locationSystem;
+        public final MapDirections mapDirections;
 	
 	private final Map<Location, AntHome> antHomeLocations = new HashMap<>();
 	private final List<AntHome> antHomes = new ArrayList<>();
 	private int antId = 0;
 	private final List<Ant> ants = new ArrayList<>(10);
 	private final List<FoodStorage> foodSources = new ArrayList<>(100);
-	private final Map<MatrixLocation, Marker> markers = new HashMap<>();
+	private final Map<Location, Marker> markers = new HashMap<>();
 	
 	private final ArrayDeque<Runnable> actionQueue = new ArrayDeque<>();
 	
@@ -55,8 +60,13 @@ public final class World {
 	public World(int size) {
 		this.size = size;
 		
-		// Create initial anthome
-		createAntHome(size/2, size/2);
+                locationSystem = new CubeLocationSystem();
+                locationSystem.setSize(size);
+                mapDirections = locationSystem.getMapDirections();
+
+                // Create initial anthome
+		createAntHome(locationSystem.getCenter());
+                
 		eventLog = new EventLog(this);
 		
 	}
@@ -84,11 +94,11 @@ public final class World {
 	public int getSize() {
 		return size;
 	}
+        
 	
-	
-	public void createAntHome() {
-		createAntHome(random.nextInt(size), random.nextInt(size));
-	}
+//	public void createAntHome() {
+//		createAntHome(random.nextInt(size), random.nextInt(size));
+//	}
 	
 	public AntHome getAntHomeAt(Location location) {
 		return antHomeLocations.get(location);
@@ -96,10 +106,6 @@ public final class World {
 	
 	public List<AntHome> getAntHomes() {
 		return antHomes;
-	}
-	
-	public void createAntHome(final int x, final int y) {
-		createAntHome(Location.at(x, y));
 	}
 	
 	public void createAntHome(final Location location) {
@@ -124,7 +130,7 @@ public final class World {
 	
 	public void createAnt(AntHome antHome) {
 		actionQueue.add(() -> {
-			Ant ant = new WorkerAnt(antHome, antId++, antHome.getX(), antHome.getY());
+			Ant ant = new WorkerAnt(antHome, antId++, antHome.getLocation());
 			ants.add(ant);
 			antHome.addAnt(ant);
                         eventLog.log(antHome, EventType.ANT_BORN);
@@ -198,11 +204,17 @@ public final class World {
         }
         
 	public void addStableFoodSource() {
-		actionQueue.add(() -> {
-			int x = random.nextInt(size);
-			int y = random.nextInt(size);
-			foodSources.add(new FoodStorage(this, 500, 500, x, y).setRestock(100, 50));
-		});
+            final int capacity = getSimSettings().foodstore_stable_capacity;
+            final int refillRate = getSimSettings().foodstore_stable_refillRate;
+            final int refillPeriod = getSimSettings().foodstore_stable_refillPeriod;
+            
+            actionQueue.add(() -> {
+                    Location loc = locationSystem.randomLocation();
+                    System.out.println("Food: " + loc.toString());
+                    foodSources.add(
+                            new FoodStorage(this, capacity, capacity, loc)
+                                    .setRestock(refillPeriod, refillRate));
+            });
 	}
 	
 	public void addStableFoodSources(int num) {
@@ -213,9 +225,8 @@ public final class World {
 	
 	public void addTempFoodSource() {
 		actionQueue.add(() -> {
-			int x = random.nextInt(size);
-			int y = random.nextInt(size);
-			foodSources.add(new FoodStorage(this, 10_000, 10_000, x, y).setRemoveWhenEmpty(true));		
+			Location loc = locationSystem.randomLocation();
+			foodSources.add(new FoodStorage(this, 10_000, 10_000, loc).setRemoveWhenEmpty(true));		
 		});
 	}
 	
@@ -295,7 +306,7 @@ public final class World {
 		AntHome antHome = me.getAntHome();
 		Location loc = me.getLocation();
 		List<AntHomeEntrance> entrances = antHome.getEntrances();
-		MatrixMappableEntity closest = antHome;
+		MappableEntity closest = antHome;
 		double closestDistance = loc.getDistanceTo(closest.getLocation());
 		for(AntHomeEntrance entrance: entrances) {
 			double distance = loc.getDistanceTo(entrance.getLocation());
@@ -307,13 +318,16 @@ public final class World {
 		return closest.getLocation();
 	}
 	
-	public void setMyLocation(MappableEntity me, int x, int y) throws HitAWallException {
-		if(x < 0 || y < 0) throw new HitAWallException("You hit a wall!");
-		if(x >= size || y >= size) throw new HitAWallException("You hit a wall!");
-		me.setLocation(Location.at(x, y));
+	public void setMyLocation(MappableEntity me, Location location) throws HitAWallException {
+            if(location instanceof MatrixLocation) {
+                MatrixLocation loc = (MatrixLocation) location;
+		if(loc.getX() < 0 || loc.getY() < 0) throw new HitAWallException("You hit a wall!");
+		if(loc.getX() >= size || loc.getY() >= size) throw new HitAWallException("You hit a wall!");
+            }
+            me.setLocation(location);
 	}
 	
-	public boolean didIFindFood(MatrixMappableEntity me) {
+	public boolean didIFindFood(MappableEntity me) {
 		for(FoodStorage fs: foodSources) {
 			if(fs.getLocation().equals(me.getLocation()) && fs.hasFood()) return true;
 		}
@@ -321,7 +335,7 @@ public final class World {
 		return false;
 	}
 	
-	public FoodStorage getFoodStorage(MatrixMappableEntity me) {
+	public FoodStorage getFoodStorage(MappableEntity me) {
 		for(FoodStorage fs: foodSources) {
 			if(fs.getLocation().equals(me.getLocation()) && fs.hasFood()) return fs;
 		}
@@ -329,16 +343,16 @@ public final class World {
 		return null;
 	}
 	
-	public boolean didIFindAMarker(MatrixMappableEntity me) {
-		return markers.containsKey((MatrixLocation)me.getLocation());
+	public boolean didIFindAMarker(MappableEntity me) {
+		return markers.containsKey(me.getLocation());
 	}
 
-	public Marker getMarker(MatrixMappableEntity me) {
-		return markers.get((MatrixLocation)me.getLocation());
+	public Marker getMarker(MappableEntity me) {
+		return markers.get(me.getLocation());
 	}
 	
 	public void placeMarker(Marker marker) {
-		markers.put((MatrixLocation) marker.getLocation(), marker);
+		markers.put(marker.getLocation(), marker);
 	}
 	
 	public void addWorldListeners(WorldListener listener) {

@@ -5,6 +5,9 @@
  */
 package com.charlware.ants.sim;
 
+import com.charlware.ants.MapDirection;
+import com.charlware.ants.MapDirections;
+
 /**
  *
  * @author CVanJaarsveldt
@@ -19,11 +22,17 @@ public class CubeLocation implements Location {
 		this.y = y;
 		this.z = z;
 	}
+        
+        public CubeLocation(final int x, final int y) {
+            this.x = x;
+            this.y = y;
+            this.z = -x - y;
+        }
 	
 	public CubeLocation(final MatrixLocation matrix) {
 		this.x = matrix.getX();
-		this.z = matrix.getY();
-		this.y = -x - z;
+		this.y = matrix.getY();
+		this.z = -x - y;
 	}
 
 	@Override
@@ -50,7 +59,7 @@ public class CubeLocation implements Location {
 	 * @return 
 	 */
 	public MatrixLocation toMatrixLocation() {
-		return new MatrixLocation(x, z);
+		return new MatrixLocation(x, y);
 	}
 
 	@Override
@@ -88,8 +97,25 @@ public class CubeLocation implements Location {
 
 	@Override
 	public String toString() {
-		return "CubeLocation{" + "x=" + x + ", y=" + y + ", z=" + z + '}';
+		return "[" + x + "; " + y + "; " + z + "]";
 	}
+
+    @Override
+    public Location[] getNeighbors() {
+        MapDirection[] directions = MapDirections.CUBE_DIRECTIONS;
+        Location[] neighbors = new CubeLocation[directions.length];
+        
+        for(int i = 0; i < directions.length; i++) {
+            neighbors[i] = directions[i].applyTo(this);
+        }
+        
+        return neighbors;
+    }
+
+    @Override
+    public MapDirection[] getDirections() {
+        return MapDirections.CUBE_DIRECTIONS;
+    }
 	
 	
 }
