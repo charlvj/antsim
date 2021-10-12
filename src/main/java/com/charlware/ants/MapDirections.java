@@ -49,6 +49,22 @@ public class MapDirections {
             nowhere = null;
         }
     }
+    
+    public MapDirection[] getAllDirections() {
+        return directions;
+    }
+    
+    public MapDirection getDirectionToCircleStart() {
+        if(nowhere instanceof MatrixMapDirection) {
+            return directions[3];
+        }
+        else if(nowhere instanceof CubeMapDirection) {
+            return directions[4];
+        }
+        else {
+            throw new RuntimeException("Invalid map direction.");
+        }
+    }
 
     public MapDirection anywhereBut(final MapDirection except) {
         MapDirection[] dirs = new MapDirection[directions.length - 1];

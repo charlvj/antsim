@@ -7,12 +7,14 @@ package com.charlware.ants.sim;
 
 import com.charlware.ants.MapDirections;
 import com.charlware.ants.World;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
  * @author charlvj
  */
-public class MatrixLocationSystem implements LocationSystem {
+public class MatrixLocationSystem extends LocationSystem {
 
     private int size = 0;
     
@@ -21,13 +23,13 @@ public class MatrixLocationSystem implements LocationSystem {
         return new MatrixLocation(size / 2, size / 2);
     }
 
-    @Override
-    public Location randomLocation() {
-        return new MatrixLocation(
-                World.random.nextInt(size),
-                World.random.nextInt(size)
-        );
-    }
+//    @Override
+//    public Location randomLocation() {
+//        return new MatrixLocation(
+//                World.random.nextInt(size),
+//                World.random.nextInt(size)
+//        );
+//    }
 
     @Override
     public MapDirections getMapDirections() {
@@ -38,5 +40,24 @@ public class MatrixLocationSystem implements LocationSystem {
     public void setSize(int size) {
         this.size = size;
     }
+    
+    @Override
+    public int getSize() {
+        return size;
+    }
+
+//    @Override
+//    public List<Location> getMapBorder() {
+//        List<Location> border = new ArrayList<>();
+//        for(int x = 0; x < size; x++) {
+//            border.add(new MatrixLocation(x, 0));
+//            border.add(new MatrixLocation(x, size));
+//        }
+//        for(int y = 0; y < size; y++) {
+//            border.add(new MatrixLocation(0, y));
+//            border.add(new MatrixLocation(size, y));
+//        }
+//        return border;
+//    }
     
 }

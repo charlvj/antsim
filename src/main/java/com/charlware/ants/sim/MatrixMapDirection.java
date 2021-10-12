@@ -27,6 +27,12 @@ public class MatrixMapDirection implements MapDirection {
     }
 
     @Override
+    public Location applyTo(Location location, int times) {
+        MatrixLocation loc = (MatrixLocation) location;
+        return new MatrixLocation(loc.getX() + x * times, loc.getY() + y * times);
+    }
+
+    @Override
     public int hashCode() {
         int hash = 7;
         hash = 37 * hash + this.x;
@@ -59,4 +65,5 @@ public class MatrixMapDirection implements MapDirection {
     public String toString() {
         return "[" + x + "; " + y + "]";
     }
+
 }

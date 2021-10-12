@@ -30,6 +30,12 @@ public class CubeMapDirection implements MapDirection {
     }
 
     @Override
+    public Location applyTo(Location location, int times) {
+        CubeLocation loc = (CubeLocation) location;
+        return new CubeLocation(loc.getX() + x * times, loc.getY() + y * times, loc.getZ() + z * times);
+    }
+
+    @Override
     public int hashCode() {
         int hash = 5;
         hash = 71 * hash + this.x;

@@ -29,7 +29,7 @@ public abstract class Ant extends MappableEntity implements DynamicEntity {
     protected final StateMachine<AntState, AntTrigger> state;
 
     protected int tummyLevel;
-    private boolean showMsgs = false;
+    private boolean showMsgs = true;
     protected int currentAge = 0;
 
     public Ant(final int id, final AntHome home, final int storageCapacity, StateMachine<AntState, AntTrigger> stateMachine) {
@@ -63,6 +63,8 @@ public abstract class Ant extends MappableEntity implements DynamicEntity {
 
     protected void move(MapDirection direction) throws HitAWallException {
         Location newLocation = direction.applyTo(location);
+//        if(!world.locationSystem.isLocationInBounds(newLocation))
+//            throw new HitAWallException("Location out of bounds: " + newLocation);
         world.setMyLocation(this, newLocation);
     }
 

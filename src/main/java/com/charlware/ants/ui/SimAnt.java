@@ -49,7 +49,7 @@ public class SimAnt extends javax.swing.JFrame implements SimulationStepListener
     }
 
     private void initWorld() {
-        world = new World(50);
+        world = new World(30);
     }
 
     private void initBoard() {

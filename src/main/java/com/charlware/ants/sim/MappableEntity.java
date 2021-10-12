@@ -12,6 +12,14 @@ package com.charlware.ants.sim;
 public class MappableEntity {
     protected Location location = null;
     
+    public MappableEntity() {
+        
+    }
+    
+    public MappableEntity(Location loc) {
+        this.location = loc;
+    }
+    
     public Location getLocation() {
         return location;
     }

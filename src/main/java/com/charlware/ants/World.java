@@ -22,6 +22,7 @@ import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 import org.apache.commons.configuration2.BaseConfiguration;
 import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.configuration2.builder.fluent.Configurations;
@@ -45,6 +46,7 @@ public final class World {
 	private final List<Ant> ants = new ArrayList<>(10);
 	private final List<FoodStorage> foodSources = new ArrayList<>(100);
 	private final Map<Location, Marker> markers = new HashMap<>();
+        private final List<MappableEntity> border = new ArrayList<>();
 	
 	private final ArrayDeque<Runnable> actionQueue = new ArrayDeque<>();
 	
@@ -64,6 +66,14 @@ public final class World {
                 locationSystem.setSize(size);
                 mapDirections = locationSystem.getMapDirections();
 
+                // Create map border
+                border.addAll(
+                        locationSystem
+                                .getMapBorder()
+                                .stream()
+                                .map(loc -> new MappableEntity(loc))
+                                .collect(Collectors.toList()));
+                
                 // Create initial anthome
 		createAntHome(locationSystem.getCenter());
                 
@@ -100,6 +110,10 @@ public final class World {
 //		createAntHome(random.nextInt(size), random.nextInt(size));
 //	}
 	
+        public List<MappableEntity> getObstacles() {
+            return border;
+        }
+        
 	public AntHome getAntHomeAt(Location location) {
 		return antHomeLocations.get(location);
 	}

@@ -13,6 +13,7 @@ import com.charlware.ants.sim.Location;
  */
 public interface MapDirection {
     Location applyTo(Location location);
+    Location applyTo(Location location, int times);
 }
 
 //enum MapDirectionEnum {

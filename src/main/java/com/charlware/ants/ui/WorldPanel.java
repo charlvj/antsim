@@ -41,7 +41,7 @@ import javax.swing.Timer;
  */
 public class WorldPanel extends JPanel {
 
-    public static int multiplier = 8;
+    public static int multiplier = 10;
 
     private Timer timer;
     private int baseTimerSpeed = 100;
@@ -149,8 +149,11 @@ public class WorldPanel extends JPanel {
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
         Graphics2D g2 = (Graphics2D) g;
+        g2.translate(-topLeft.x, -topLeft.y - 2*multiplier);
+
         drawWorld(g2);
-        g2.translate(-topLeft.x, -topLeft.y);
+//        System.out.println("paintComponent");
+//        g2.translate(topLeft.x, topLeft.y);
     }
     
     private void updateViewingArea(int x, int y) {
@@ -203,10 +206,7 @@ public class WorldPanel extends JPanel {
         
         updateViewingArea(x, y);
         
-//        x = x - topLeft.x;
-//        y = y - topLeft.y;
-        
-        System.out.println("drawLocation: " + mloc + " -->  " + x + "; " + y + ";     " + topLeft);
+//        System.out.println("drawLocation: " + location + " --> " + mloc + " -->  " + x + "; " + y + ";     " + topLeft + ";   " + location.getClass().getName());
         
         return new Point(x, y);
     }
@@ -247,9 +247,16 @@ public class WorldPanel extends JPanel {
     }
 
     public void drawWorld(Graphics2D g) {
+//        System.out.println("-----");
         
         g.setFont(small);
 
+        // Obstacles
+        g.setColor(Color.BLACK);
+        for(MappableEntity obstacle : world.getObstacles()) {
+            drawEntity(g, "#", obstacle);
+        }
+        
         // Foodstores
         for (FoodStorage fs : world.getFoodSources()) {
             g.setColor(fs.hasFood() ? DARK_GREEN : Color.RED);

@@ -23,6 +23,10 @@ public interface Location {
         public Location[] getNeighbors();
 	public double getDistanceTo(Location other);
         
+        public Location add(Location location);
+        public Location subtract(Location location);
+        public Location multiply(int scalar);
+        
         public default MapDirection getDirectionTo(Location other) {
             return DirectionFinder.getDirection(this, other);
         }

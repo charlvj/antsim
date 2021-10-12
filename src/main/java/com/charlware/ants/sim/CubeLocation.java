@@ -116,6 +116,23 @@ public class CubeLocation implements Location {
     public MapDirection[] getDirections() {
         return MapDirections.CUBE_DIRECTIONS;
     }
+
+    @Override
+    public Location add(Location location) {
+        CubeLocation l = (CubeLocation) location;
+        return new CubeLocation(x + l.x, y + l.y, z + l.z);
+    }
+
+    @Override
+    public Location subtract(Location location) {
+        CubeLocation l = (CubeLocation) location;
+        return new CubeLocation(x - l.x, y - l.y, z - l.z);
+    }
+
+    @Override
+    public Location multiply(int scalar) {
+        return new CubeLocation(x * scalar, y * scalar, z * scalar);
+    }
 	
 	
 }
